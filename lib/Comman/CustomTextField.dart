@@ -10,6 +10,7 @@ class CustomTextField extends StatelessWidget {
   final Widget? suffixIcon;
   final InputDecoration? decoration;
   final String? Function(String?)? validator;
+  final FocusNode? focusNode;
   const CustomTextField({
     required this.textEditingController,
     this.obscureText = false,
@@ -17,7 +18,8 @@ class CustomTextField extends StatelessWidget {
     this.prefixIcon,
     this.suffixIcon,
     this.decoration,
-    this.validator
+    this.validator,
+    this.focusNode
   });
 
   @override
@@ -28,7 +30,7 @@ class CustomTextField extends StatelessWidget {
       controller: textEditingController,
       keyboardType: keyboardType,
       validator: validator,
-
+ focusNode: focusNode,
     );
   }
 }

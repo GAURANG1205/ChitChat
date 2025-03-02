@@ -17,10 +17,7 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -51,10 +48,10 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyBCzTRgox3yrj_krTDYm7yuyh9sRQFkVsg',
-    appId: '1:107630109761:android:9dbc1c319bceebca8492c0',
+    appId: '1:107630109761:android:6dfe85286fac16188492c0',
     messagingSenderId: '107630109761',
     projectId: 'chitchat-5f122',
-    storageBucket: 'chitchat-5f122.appspot.com',
+    storageBucket: 'chitchat-5f122.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
@@ -62,8 +59,17 @@ class DefaultFirebaseOptions {
     appId: '1:107630109761:ios:10e108eec88430ae8492c0',
     messagingSenderId: '107630109761',
     projectId: 'chitchat-5f122',
-    storageBucket: 'chitchat-5f122.appspot.com',
+    storageBucket: 'chitchat-5f122.firebasestorage.app',
     iosBundleId: 'com.example.chitchat',
+  );
+
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyCyUByFI_mZZJg-1dJdqOzw0hmxB7oWgFI',
+    appId: '1:107630109761:web:92411426a2b382df8492c0',
+    messagingSenderId: '107630109761',
+    projectId: 'chitchat-5f122',
+    authDomain: 'chitchat-5f122.firebaseapp.com',
+    storageBucket: 'chitchat-5f122.firebasestorage.app',
   );
 
 }

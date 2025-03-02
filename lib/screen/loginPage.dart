@@ -14,11 +14,15 @@ class _LoginPageState extends State<loginPage> {
   var showPassword = true;
 final TextEditingController emailController = TextEditingController();
 final TextEditingController passwordController = TextEditingController();
+final _emailFocus = FocusNode();
+final _passwordFocus = FocusNode();
 final _formkey = GlobalKey<FormState>();
 @override
   void dispose() {
   emailController.dispose();
   passwordController.dispose();
+  _emailFocus.dispose();
+  _passwordFocus.dispose();
   }
 
   String? validateEmail(String? value){
@@ -71,10 +75,6 @@ final _formkey = GlobalKey<FormState>();
               height: mq.height*0.7<0?0:mq.height*0.7,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
-                // BorderRadius.only(
-                //   topLeft: Radius.circular(20),
-                //   topRight: Radius.circular(20),
-                // ),
                 color: isDarkMode ? Colors.black45 : kContentColorLightTheme,
               ),
               child: SingleChildScrollView(
@@ -89,6 +89,7 @@ final _formkey = GlobalKey<FormState>();
                             textEditingController: emailController,
                             keyboardType: TextInputType.emailAddress,
                             validator:validateEmail,
+                            focusNode: _emailFocus,
                             decoration: InputDecoration(
                               labelText: "Email",
                               suffixIcon: Icon(Icons.email_outlined,
@@ -101,6 +102,7 @@ final _formkey = GlobalKey<FormState>();
                             textEditingController: passwordController,
                             obscureText: showPassword, // Hide input for password
                             validator: validPassword,
+                            focusNode: _passwordFocus,
                             decoration: InputDecoration(
                               labelText: "Password",
                               suffixIcon: IconButton(
@@ -126,6 +128,7 @@ final _formkey = GlobalKey<FormState>();
                           SizedBox(height: 24), // Add spacing
                           ElevatedButton(
                             onPressed: () {
+                              FocusScope.of(context).unfocus();
                               if(_formkey.currentState?.validate()??false){}
                               // Implement login action
                             },

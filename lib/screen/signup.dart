@@ -17,7 +17,11 @@ class _LoginPageState extends State<signUp> {
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController userNameController = TextEditingController();
   final TextEditingController phoneNumberController = TextEditingController();
-  final _formkey = GlobalKey<FormState>();
+  final _emailFocus = FocusNode();
+  final _passwordFocus = FocusNode();
+  final _userNameFocus = FocusNode();
+  final _phoneNumberFocus = FocusNode();
+final _formkey = GlobalKey<FormState>();
   @override
   void dispose() {
     emailController.dispose();
@@ -76,7 +80,7 @@ class _LoginPageState extends State<signUp> {
             height: mq.height,
             color: !isDarkMode ? kPrimaryColor : kContentColorDarkTheme,
             child: Padding(
-              padding: EdgeInsets.only(top: mq.height*0.04, left: 20),
+              padding: EdgeInsets.only(top: mq.height*0.06, left: 20),
               child: Text(
                 'Sign Up\nCreate Your Account',
                 style: Theme.of(context).textTheme.titleLarge!.copyWith(
@@ -104,8 +108,9 @@ class _LoginPageState extends State<signUp> {
                     child: Column(
                       children: [
                         CustomTextField(
-                          textEditingController: emailController,
+                          textEditingController: userNameController,
                           validator: _validateUsername,
+                          focusNode: _userNameFocus,
                           decoration: InputDecoration(
                             labelText: "Username",
                             suffixIcon: Icon(Icons.person_outline_rounded,
@@ -115,9 +120,10 @@ class _LoginPageState extends State<signUp> {
                         ),
                         SizedBox(height: 30), // Add spacing
                     CustomTextField(
-                      textEditingController: userNameController,
+                      textEditingController: emailController,
                           validator: _validateEmail,
                           keyboardType: TextInputType.emailAddress,
+                          focusNode: _emailFocus,
                           decoration: InputDecoration(
                             labelText: "Email",
                             suffixIcon: Icon(Icons.email_outlined,
@@ -129,7 +135,8 @@ class _LoginPageState extends State<signUp> {
                         CustomTextField(
                           textEditingController: passwordController,
                           validator: _validatePassword,
-                          obscureText: showPassword, // Hide input for password
+                          obscureText: showPassword,
+                          focusNode: _passwordFocus,
                           decoration: InputDecoration(
                             labelText: "Password",
                             suffixIcon: IconButton(
@@ -152,6 +159,7 @@ class _LoginPageState extends State<signUp> {
                           textEditingController: phoneNumberController,
                           validator: _validatePhone,
                           keyboardType: TextInputType.phone,
+                          focusNode: _phoneNumberFocus,
                           decoration: InputDecoration(
                             labelText: "Phone Number",
                             suffixIcon:  Icon(
@@ -163,6 +171,7 @@ class _LoginPageState extends State<signUp> {
                         SizedBox(height: 24), // Add spacing
                         ElevatedButton(
                           onPressed: () {
+                            FocusScope.of(context).unfocus();
                             if(_formkey.currentState?.validate()??false){}
                             // Implement login action
                           },
