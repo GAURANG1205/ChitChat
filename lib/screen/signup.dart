@@ -26,6 +26,10 @@ final _formkey = GlobalKey<FormState>();
   void dispose() {
     emailController.dispose();
     passwordController.dispose();
+    _emailFocus.dispose();
+    _phoneNumberFocus.dispose();
+    _passwordFocus.dispose();
+    _userNameFocus.dispose();
   }
 
   String? _validateUsername(String? value) {
