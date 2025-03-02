@@ -1,4 +1,5 @@
-import 'package:chitchat/colors.dart';
+import 'package:chitchat/Comman/CustomTextField.dart';
+import 'package:chitchat/Theme/colors.dart';
 import 'package:chitchat/screen/signup.dart';
 import 'package:flutter/material.dart';
 
@@ -11,12 +12,39 @@ class loginPage extends StatefulWidget {
 
 class _LoginPageState extends State<loginPage> {
   var showPassword = true;
+final TextEditingController emailController = TextEditingController();
+final TextEditingController passwordController = TextEditingController();
+final _formkey = GlobalKey<FormState>();
+@override
+  void dispose() {
+  emailController.dispose();
+  passwordController.dispose();
+  }
 
+  String? validateEmail(String? value){
+  if(value ==null||value.isEmpty){
+    return "Please enter your Email-Address";
+  }
+  final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+  if(!emailRegex.hasMatch(value)){
+    return "Please enter a valid emailAddress(eg:example@gmail.com)";
+  }
+  return null;
+  }
+  String? validPassword(String? value){
+  if(value ==null||value.isEmpty){
+    return "Please enter a Password";
+  }
+  if(value.length<6){
+    return "Password Must be atLeast 6 Character";
+  }
+  return null;
+  }
+  
   @override
   Widget build(BuildContext context) {
     final mq = MediaQuery.of(context).size;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
     return Scaffold(
       body: Stack(
         children: [
@@ -53,10 +81,14 @@ class _LoginPageState extends State<loginPage> {
                 child: Padding(
                   padding: EdgeInsets.only(top: 30, left: 16, right: 16),
                   child: Form(
+                    key: _formkey,
                     child:  Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          TextFormField(
+                          CustomTextField(
+                            textEditingController: emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            validator:validateEmail,
                             decoration: InputDecoration(
                               labelText: "Email",
                               suffixIcon: Icon(Icons.email_outlined,
@@ -65,8 +97,10 @@ class _LoginPageState extends State<loginPage> {
                             ),
                           ),
                           SizedBox(height: 30), // Add spacing
-                          TextFormField(
+                          CustomTextField(
+                            textEditingController: passwordController,
                             obscureText: showPassword, // Hide input for password
+                            validator: validPassword,
                             decoration: InputDecoration(
                               labelText: "Password",
                               suffixIcon: IconButton(
@@ -92,6 +126,7 @@ class _LoginPageState extends State<loginPage> {
                           SizedBox(height: 24), // Add spacing
                           ElevatedButton(
                             onPressed: () {
+                              if(_formkey.currentState?.validate()??false){}
                               // Implement login action
                             },
                             child: Center(

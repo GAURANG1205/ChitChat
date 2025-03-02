@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import '../colors.dart';
+import '../Theme/colors.dart';
 
 class chatScreen extends StatefulWidget {
   chatScreen({super.key});

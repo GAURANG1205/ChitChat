@@ -1,4 +1,4 @@
-import 'package:chitchat/colors.dart';
+import 'package:chitchat/Theme/colors.dart';
 import 'package:chitchat/screen/chatScreen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';

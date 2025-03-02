@@ -1,4 +1,5 @@
-import 'package:chitchat/colors.dart';
+import 'package:chitchat/Comman/CustomTextField.dart';
+import 'package:chitchat/Theme/colors.dart';
 import 'package:chitchat/screen/loginPage.dart';
 import 'package:flutter/material.dart';
 
@@ -10,8 +11,58 @@ class signUp extends StatefulWidget {
 }
 
 class _LoginPageState extends State<signUp> {
-  var showPassword = true;
+  var showPassword =true;
 
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController userNameController = TextEditingController();
+  final TextEditingController phoneNumberController = TextEditingController();
+  final _formkey = GlobalKey<FormState>();
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+  }
+
+  String? _validateUsername(String? value) {
+    if (value == null || value.isEmpty) {
+      return "Please enter your username";
+    }
+    return null;
+  }
+
+  String? _validateEmail(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter your email address';
+    }
+    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    if (!emailRegex.hasMatch(value)) {
+      return 'Please enter a valid email address (e.g., example@email.com)';
+    }
+    return null;
+  }
+
+  String? _validatePassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter a password';
+    }
+    if (value.length < 6) {
+      return 'Password must be at least 6 characters long';
+    }
+    return null;
+  }
+
+  String? _validatePhone(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter your phone number';
+    }
+
+    final phoneRegex = RegExp(r'^\+?[\d\s-]{10,}$');
+    if (!phoneRegex.hasMatch(value)) {
+      return 'Please enter a valid phone number (e.g., +1234567890)';
+    }
+    return null;
+  }
   @override
   Widget build(BuildContext context) {
     final mq = MediaQuery.of(context).size;
@@ -43,28 +94,30 @@ class _LoginPageState extends State<signUp> {
               height: mq.height*0.8<0?0:mq.height*0.8,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
-                // BorderRadius.only(
-                //   topLeft: Radius.circular(20),
-                //   topRight: Radius.circular(20),
-                // ),
                 color: isDarkMode ? Colors.black45 : kContentColorLightTheme,
               ),
               child: SingleChildScrollView(
                 child: Padding(
                   padding: EdgeInsets.only(top: 30, left: 16, right: 16),
                   child: Form(
+                    key: _formkey,
                     child: Column(
                       children: [
-                        TextFormField(
+                        CustomTextField(
+                          textEditingController: emailController,
+                          validator: _validateUsername,
                           decoration: InputDecoration(
                             labelText: "Username",
-                            suffixIcon: Icon(Icons.supervised_user_circle_outlined,
+                            suffixIcon: Icon(Icons.person_outline_rounded,
                                 color:
                                 isDarkMode ? Colors.white : Colors.black),
                           ),
                         ),
                         SizedBox(height: 30), // Add spacing
-                        TextFormField(
+                    CustomTextField(
+                      textEditingController: userNameController,
+                          validator: _validateEmail,
+                          keyboardType: TextInputType.emailAddress,
                           decoration: InputDecoration(
                             labelText: "Email",
                             suffixIcon: Icon(Icons.email_outlined,
@@ -73,7 +126,9 @@ class _LoginPageState extends State<signUp> {
                           ),
                         ),
                         const SizedBox(height: 30,),
-                        TextFormField(
+                        CustomTextField(
+                          textEditingController: passwordController,
+                          validator: _validatePassword,
                           obscureText: showPassword, // Hide input for password
                           decoration: InputDecoration(
                             labelText: "Password",
@@ -93,28 +148,22 @@ class _LoginPageState extends State<signUp> {
                           ),
                         ),
                         const SizedBox(height: 30),
-                        TextFormField(
-                          obscureText: showPassword, // Hide input for password
+                        CustomTextField(
+                          textEditingController: phoneNumberController,
+                          validator: _validatePhone,
+                          keyboardType: TextInputType.phone,
                           decoration: InputDecoration(
-                            labelText: "Confirm Password",
-                            suffixIcon: IconButton(
-                                onPressed: () {
-                                  setState(() {
-                                    showPassword = !showPassword;
-                                  });
-                                },
-                                icon: Icon(
-                                  !showPassword
-                                      ? Icons.visibility_outlined
-                                      : Icons.visibility_off_outlined,
+                            labelText: "Phone Number",
+                            suffixIcon:  Icon(
+                                  Icons.phone,
                                   color:
                                   isDarkMode ? Colors.white : Colors.black,
                                 )),
                           ),
-                        ),
                         SizedBox(height: 24), // Add spacing
                         ElevatedButton(
                           onPressed: () {
+                            if(_formkey.currentState?.validate()??false){}
                             // Implement login action
                           },
                           child: Center(
@@ -183,7 +232,7 @@ class _LoginPageState extends State<signUp> {
                                 SizedBox(width: 5,),
                                 InkWell(
                                   onTap: (){
-                                    Navigator.push(context,MaterialPageRoute(builder: (context)=>loginPage()));
+                                    Navigator.pop(context);
                                   },
                                   child: Text(
                                     "Login In",

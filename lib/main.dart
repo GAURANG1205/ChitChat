@@ -3,9 +3,9 @@ import 'package:chitchat/screen/chatScreen.dart';
 import 'package:chitchat/screen/loginPage.dart';
 import 'package:chitchat/screen/signup.dart';
 import 'package:chitchat/screen/splashScreen.dart';
-import 'package:chitchat/theme.dart';
+import 'package:chitchat/Theme/theme.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_native_splash/flutter_native_splash.dart';
+// import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 void main() async {
@@ -26,7 +26,7 @@ class MyApp extends StatelessWidget {
         darkTheme: darkThemeData(context),
         themeMode: ThemeMode.system,
         title: 'Chit Chat',
-        home: chatScreen());
+        home: loginPage());
   }
 }
 
