@@ -1,5 +1,6 @@
 import 'package:chitchat/Comman/CustomTextField.dart';
 import 'package:chitchat/Comman/ScaffoldMessage.dart';
+import 'package:chitchat/Data/Repository/authRepository.dart';
 import 'package:chitchat/Logic/AuthState.dart';
 import 'package:chitchat/Theme/colors.dart';
 import 'package:chitchat/router/app_router.dart';
@@ -32,6 +33,7 @@ class _LoginPageState extends State<loginPage> {
     passwordController.dispose();
     _emailFocus.dispose();
     _passwordFocus.dispose();
+    super.dispose();
   }
 
   String? validateEmail(String? value) {
@@ -58,18 +60,12 @@ class _LoginPageState extends State<loginPage> {
   Future<void> handleSignIn() async {
     FocusScope.of(context).unfocus();
     if (_formkey.currentState?.validate() ?? false) {
-      try {
         await getit<cubitAuth>().signIn(
             email: emailController.text, password: passwordController.text);
-      } catch (e) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.toString())));
-      }
-    } else {
+      } else {
       print("Form Validation Failed");
     }
   }
-
   @override
   Widget build(BuildContext context) {
     final mq = MediaQuery.of(context).size;
@@ -79,9 +75,11 @@ class _LoginPageState extends State<loginPage> {
         listener: (context, state) {
           if (state.status == AuthStatus.authenticated) {
             getit<AppRouter>().pushAndRemoveUntil(chatScreen());
+          } else if (state.status == AuthStatus.error && state.error != null) {
+            ScaffoldMessage.showSnackBar(context, message: state.error!,isError: state.error!=null);
           }
-          else if (state.status == AuthStatus.error && state.error != null) {
-            ScaffoldMessage.showSnackBar(context, message: state.error!);
+          else if(state.status==AuthStatus.loading){
+            CircularProgressIndicator(color: Colors.white,);
           }
         },
         builder: (context, state) {
@@ -220,7 +218,7 @@ class _LoginPageState extends State<loginPage> {
                                   InkWell(
                                     splashColor:
                                         isDarkMode ? Colors.white : Colors.grey,
-                                    onTap: () {},
+                                    onTap: (){getit<cubitAuth>().googleSignIn();},
                                     child: Image(
                                         width: 25,
                                         image: AssetImage(

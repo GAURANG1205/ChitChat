@@ -17,11 +17,11 @@ class signUp extends StatefulWidget {
 
   @override
   State<signUp> createState() {
-    return _LoginPageState();
+    return _signupPageState();
   }
 }
 
-class _LoginPageState extends State<signUp> {
+class _signupPageState extends State<signUp> {
   var showPassword = true;
 
   final TextEditingController emailController = TextEditingController();
@@ -42,6 +42,7 @@ class _LoginPageState extends State<signUp> {
     _phoneNumberFocus.dispose();
     _passwordFocus.dispose();
     _userNameFocus.dispose();
+    super.dispose();
   }
 
   String? _validateUsername(String? value) {
@@ -87,17 +88,13 @@ class _LoginPageState extends State<signUp> {
   Future<void> handleSignUp() async {
     FocusScope.of(context).unfocus();
     if (_formkey.currentState?.validate() ?? false) {
-      try {
+
         await getit<cubitAuth>().signUp(
             username: userNameController.text,
             email: emailController.text,
             phoneNumber: phoneNumberController.text,
             password: passwordController.text);
-      } catch (e) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.toString())));
-      }
-    } else {
+      }else {
       print("Form Validation Failed");
     }
   }
@@ -113,7 +110,7 @@ class _LoginPageState extends State<signUp> {
         if (state.status == AuthStatus.authenticated) {
           getit<AppRouter>().pushAndRemoveUntil(chatScreen());
         } else if (state.status == AuthStatus.error && state.error != null) {
-          ScaffoldMessage.showSnackBar(context, message: state.error!);
+          ScaffoldMessage.showSnackBar(context, message: state.error!,isError: state.error!=null);
         }
       },
       builder: (context, state) {
@@ -129,10 +126,10 @@ class _LoginPageState extends State<signUp> {
                   child: Text(
                     'Sign Up\nCreate Your Account',
                     style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                          color: kContentColorLightTheme,
-                          fontWeight: FontWeight.bold,
-                          fontSize: mq.width * 0.08,
-                        ),
+                      color: kContentColorLightTheme,
+                      fontWeight: FontWeight.bold,
+                      fontSize: mq.width * 0.08,
+                    ),
                   ),
                 ),
               ),
@@ -145,7 +142,7 @@ class _LoginPageState extends State<signUp> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
                     color:
-                        isDarkMode ? Colors.black45 : kContentColorLightTheme,
+                    isDarkMode ? Colors.black45 : kContentColorLightTheme,
                   ),
                   child: SingleChildScrollView(
                     child: Padding(
@@ -227,20 +224,20 @@ class _LoginPageState extends State<signUp> {
                               // Implement login action
                               child: state.status == AuthStatus.loading
                                   ? const CircularProgressIndicator(
-                                      color: Colors.white)
+                                  color: Colors.white)
                                   : Center(
-                                      child: Text(
-                                      'Sign Up',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyLarge!
-                                          .copyWith(
-                                            color: isDarkMode
-                                                ? kContentColorDarkTheme
-                                                : kContentColorLightTheme,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                    )),
+                                  child: Text(
+                                    'Sign Up',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyLarge!
+                                        .copyWith(
+                                      color: isDarkMode
+                                          ? kContentColorDarkTheme
+                                          : kContentColorLightTheme,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  )),
                             ),
                             SizedBox(
                               height: mq.height * 0.03,
@@ -249,34 +246,34 @@ class _LoginPageState extends State<signUp> {
                               children: [
                                 Expanded(
                                     child: Divider(
-                                  color: isDarkMode
-                                      ? kContentColorLightTheme
-                                      : kPrimaryColor,
-                                )),
+                                      color: isDarkMode
+                                          ? kContentColorLightTheme
+                                          : kPrimaryColor,
+                                    )),
                                 Padding(
                                   padding:
-                                      const EdgeInsets.symmetric(horizontal: 5),
+                                  const EdgeInsets.symmetric(horizontal: 5),
                                   child: Text('Or SignUp with'),
                                 ),
                                 Expanded(
                                     child: Divider(
-                                  color: isDarkMode
-                                      ? kContentColorLightTheme
-                                      : kPrimaryColor,
-                                ))
+                                      color: isDarkMode
+                                          ? kContentColorLightTheme
+                                          : kPrimaryColor,
+                                    ))
                               ],
                             ),
                             SizedBox(
                               height:
-                                  mq.height * 0.008 < 0 ? 0 : mq.height * 0.008,
+                              mq.height * 0.008 < 0 ? 0 : mq.height * 0.008,
                             ),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: [
                                 InkWell(
                                   splashColor:
-                                      isDarkMode ? Colors.white : Colors.grey,
-                                  onTap: () {},
+                                  isDarkMode ? Colors.white : Colors.grey,
+                                  onTap: (){getit<cubitAuth>().googleSignIn();},
                                   child: Image(
                                       width: 25,
                                       image: AssetImage(
@@ -315,9 +312,9 @@ class _LoginPageState extends State<signUp> {
                                             .textTheme
                                             .bodyMedium!
                                             .copyWith(
-                                                color: kPrimaryColor,
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 15),
+                                            color: kPrimaryColor,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 15),
                                       ),
                                     )
                                   ]),

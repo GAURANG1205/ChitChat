@@ -1,9 +1,12 @@
 import 'dart:async';
+import 'dart:developer';
 
 import 'package:chitchat/Logic/AuthState.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
+import '../Data/Model/user_model.dart';
 import '../Data/Repository/authRepository.dart';
 import '../Data/Repository/template/service_locator.dart';
 
@@ -61,6 +64,22 @@ class cubitAuth extends Cubit<AuthState>{
       emit(state.copyWith(status: AuthStatus.error, error: e.toString()));
     }
   }
+  Future<void> googleSignIn() async {
+    try {
+      emit(state.copyWith(status: AuthStatus.loading));
+      final user = await _authRepository.googleSignIn();
+
+      emit(state.copyWith(
+        status: AuthStatus.authenticated,
+        user: user,
+      ));
+    } catch (e) {
+      log('Error during Google Sign-In in Cubit: ${e.toString()}');
+      emit(state.copyWith(status: AuthStatus.error, error: e.toString()));
+    }
+  }
+
+
 
   Future<void> signUp({
     required String email,

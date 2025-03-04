@@ -1,7 +1,12 @@
+import 'package:chitchat/Data/Repository/template/service_locator.dart';
+import 'package:chitchat/Logic/cubitAuth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../Theme/colors.dart';
+import '../router/app_router.dart';
+import 'loginPage.dart';
 
 class chatScreen extends StatefulWidget {
   chatScreen({super.key});
@@ -32,7 +37,10 @@ class _chatScreenState extends State<chatScreen> {
         elevation: 0,
         actions: [
           IconButton(
-            onPressed: () {},
+            onPressed: () async {
+              await context.read<cubitAuth>().signOut();
+              getit<AppRouter>().pushAndRemoveUntil(loginPage());
+            },
             icon: Icon(Icons.search),
           )
         ],
