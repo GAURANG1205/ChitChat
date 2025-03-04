@@ -109,7 +109,7 @@ class AuthRepository extends RepoTemplate {
       return userModel;
     } catch (e) {
       log('Google Sign-In Error: ${e.toString()}');
-      rethrow;  // Rethrow the error for the caller to handle
+      rethrow;
     }
   }
 

@@ -79,8 +79,6 @@ class cubitAuth extends Cubit<AuthState>{
     }
   }
 
-
-
   Future<void> signUp({
     required String email,
     required String username,
