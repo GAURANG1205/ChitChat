@@ -11,6 +11,7 @@ class CustomTextField extends StatelessWidget {
   final InputDecoration? decoration;
   final String? Function(String?)? validator;
   final FocusNode? focusNode;
+  final AutovalidateMode? autovalidateMode;
   const CustomTextField({
     required this.textEditingController,
     this.obscureText = false,
@@ -19,7 +20,8 @@ class CustomTextField extends StatelessWidget {
     this.suffixIcon,
     this.decoration,
     this.validator,
-    this.focusNode
+    this.focusNode,
+    this.autovalidateMode
   });
 
   @override
@@ -31,6 +33,7 @@ class CustomTextField extends StatelessWidget {
       keyboardType: keyboardType,
       validator: validator,
  focusNode: focusNode,
+      autovalidateMode: this.autovalidateMode,
     );
   }
 }

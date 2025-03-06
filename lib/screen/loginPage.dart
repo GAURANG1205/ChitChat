@@ -126,6 +126,7 @@ class _LoginPageState extends State<loginPage> {
                                 keyboardType: TextInputType.emailAddress,
                                 validator: validateEmail,
                                 focusNode: _emailFocus,
+                                autovalidateMode: AutovalidateMode.onUserInteraction,
                                 decoration: InputDecoration(
                                   labelText: "Email",
                                   suffixIcon: Icon(Icons.email_outlined,
@@ -141,6 +142,7 @@ class _LoginPageState extends State<loginPage> {
                                 // Hide input for password
                                 validator: validPassword,
                                 focusNode: _passwordFocus,
+                                autovalidateMode: AutovalidateMode.onUserInteraction,
                                 decoration: InputDecoration(
                                   labelText: "Password",
                                   suffixIcon: IconButton(

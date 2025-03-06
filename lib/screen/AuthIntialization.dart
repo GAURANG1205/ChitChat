@@ -5,25 +5,36 @@ import 'package:chitchat/screen/loginPage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 
 import '../Logic/AuthState.dart';
 import '../Logic/cubitAuth.dart';
 
-class Splashscreen extends StatelessWidget {
+class Authintialization extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocListener<cubitAuth, AuthState>(
       listener: (context, state) {
         if (state.status == AuthStatus.authenticated) {
+          FlutterNativeSplash.remove();
           getit<AppRouter>().pushAndRemoveUntil(chatScreen());
         } else if (state.status == AuthStatus.unauthenticated) {
+          FlutterNativeSplash.remove();
           getit<AppRouter>().pushAndRemoveUntil(loginPage());
         }
       },
-      child: Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(), // Loading until auth state is checked
-        ),
+      child: BlocBuilder<cubitAuth, AuthState>(
+        builder: (context, state) {
+          if (state.status == AuthStatus.loading) {
+            return Container(); // Keep splash visible
+          }
+
+          return Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        },
       ),
     );
   }

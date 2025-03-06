@@ -1,21 +1,18 @@
+#flutter pub run flutter_native_splash:create
 flutter_native_splash:
   android: true
   ios: true
   web: true
 
   color: "#ffffff"
-  image: "assets/icon/splashLight.png"
-  branding: "assets/icon/brandingText.png"
   color_dark: "#021360"
-  image_dark: "assets/icon/splashLight.png"
-  branding_dark: "assets/icon/brandingText.png"
 
-
+  image: "assets/icon/splashLight.png"
+  image_dark: "assets/icon/splashDark.png"
   android_12:
     image: "assets/icon/splashLight.png"
+    image_dark: "assets/icon/splashDark.png"
     color: "#ffffff"
-    image_dark: "assets/icon/splashLight.png"
     color_dark: "#021360"
-    branding: "assets/icon/brandingText.png"
-    branding_dark: "assets/icon/brandingText.png"
+
 

@@ -155,6 +155,7 @@ class _signupPageState extends State<signUp> {
                               textEditingController: userNameController,
                               validator: _validateUsername,
                               focusNode: _userNameFocus,
+                              autovalidateMode: AutovalidateMode.onUserInteraction,
                               decoration: InputDecoration(
                                 labelText: "Username",
                                 suffixIcon: Icon(Icons.person_outline_rounded,
@@ -169,6 +170,7 @@ class _signupPageState extends State<signUp> {
                               validator: _validateEmail,
                               keyboardType: TextInputType.emailAddress,
                               focusNode: _emailFocus,
+                              autovalidateMode: AutovalidateMode.onUserInteraction,
                               decoration: InputDecoration(
                                 labelText: "Email",
                                 suffixIcon: Icon(Icons.email_outlined,
@@ -185,6 +187,7 @@ class _signupPageState extends State<signUp> {
                               validator: _validatePassword,
                               obscureText: showPassword,
                               focusNode: _passwordFocus,
+                              autovalidateMode: AutovalidateMode.onUserInteraction,
                               decoration: InputDecoration(
                                 labelText: "Password",
                                 suffixIcon: IconButton(
@@ -209,6 +212,7 @@ class _signupPageState extends State<signUp> {
                               validator: _validatePhone,
                               keyboardType: TextInputType.phone,
                               focusNode: _phoneNumberFocus,
+                              autovalidateMode: AutovalidateMode.onUserInteraction,
                               decoration: InputDecoration(
                                   labelText: "Phone Number",
                                   suffixIcon: Icon(
