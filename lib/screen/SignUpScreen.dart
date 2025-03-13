@@ -5,12 +5,12 @@ import 'package:chitchat/Data/Repository/template/service_locator.dart';
 import 'package:chitchat/Logic/AuthState.dart';
 import 'package:chitchat/Logic/cubitAuth.dart';
 import 'package:chitchat/Theme/colors.dart';
-import 'package:chitchat/screen/loginPage.dart';
+import 'package:chitchat/screen/LoginPageScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../router/app_router.dart';
-import 'chatScreen.dart';
+import 'HomeScreen.dart';
 
 class signUp extends StatefulWidget {
   const signUp({super.key});
@@ -78,7 +78,7 @@ class _signupPageState extends State<signUp> {
       return 'Please enter your phone number';
     }
 
-    final phoneRegex = RegExp(r'^\+?[\d\s-]{10,}$');
+    final phoneRegex = RegExp(r'^\+?[\d\s-]{10}$');
     if (!phoneRegex.hasMatch(value)) {
       return 'Please enter a valid phone number (e.g., +1234567890)';
     }
@@ -88,13 +88,12 @@ class _signupPageState extends State<signUp> {
   Future<void> handleSignUp() async {
     FocusScope.of(context).unfocus();
     if (_formkey.currentState?.validate() ?? false) {
-
-        await getit<cubitAuth>().signUp(
-            username: userNameController.text,
-            email: emailController.text,
-            phoneNumber: phoneNumberController.text,
-            password: passwordController.text);
-      }else {
+      await getit<cubitAuth>().signUp(
+          username: userNameController.text,
+          email: emailController.text,
+          phoneNumber: phoneNumberController.text,
+          password: passwordController.text);
+    } else {
       print("Form Validation Failed");
     }
   }
@@ -110,7 +109,8 @@ class _signupPageState extends State<signUp> {
         if (state.status == AuthStatus.authenticated) {
           getit<AppRouter>().pushAndRemoveUntil(chatScreen());
         } else if (state.status == AuthStatus.error && state.error != null) {
-          ScaffoldMessage.showSnackBar(context, message: state.error!,isError: state.error!=null);
+          ScaffoldMessage.showSnackBar(context,
+              message: state.error!, isError: state.error != null);
         }
       },
       builder: (context, state) {
@@ -126,10 +126,10 @@ class _signupPageState extends State<signUp> {
                   child: Text(
                     'Sign Up\nCreate Your Account',
                     style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                      color: kContentColorLightTheme,
-                      fontWeight: FontWeight.bold,
-                      fontSize: mq.width * 0.08,
-                    ),
+                          color: kContentColorLightTheme,
+                          fontWeight: FontWeight.bold,
+                          fontSize: mq.width * 0.08,
+                        ),
                   ),
                 ),
               ),
@@ -142,7 +142,7 @@ class _signupPageState extends State<signUp> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
                     color:
-                    isDarkMode ? Colors.black45 : kContentColorLightTheme,
+                        isDarkMode ? Colors.black45 : kContentColorLightTheme,
                   ),
                   child: SingleChildScrollView(
                     child: Padding(
@@ -155,7 +155,8 @@ class _signupPageState extends State<signUp> {
                               textEditingController: userNameController,
                               validator: _validateUsername,
                               focusNode: _userNameFocus,
-                              autovalidateMode: AutovalidateMode.onUserInteraction,
+                              autovalidateMode:
+                                  AutovalidateMode.onUserInteraction,
                               decoration: InputDecoration(
                                 labelText: "Username",
                                 suffixIcon: Icon(Icons.person_outline_rounded,
@@ -164,13 +165,14 @@ class _signupPageState extends State<signUp> {
                                         : Colors.black),
                               ),
                             ),
-                            SizedBox(height: 30), // Add spacing
+                            SizedBox(height: 30),
                             CustomTextField(
                               textEditingController: emailController,
                               validator: _validateEmail,
                               keyboardType: TextInputType.emailAddress,
                               focusNode: _emailFocus,
-                              autovalidateMode: AutovalidateMode.onUserInteraction,
+                              autovalidateMode:
+                                  AutovalidateMode.onUserInteraction,
                               decoration: InputDecoration(
                                 labelText: "Email",
                                 suffixIcon: Icon(Icons.email_outlined,
@@ -187,7 +189,8 @@ class _signupPageState extends State<signUp> {
                               validator: _validatePassword,
                               obscureText: showPassword,
                               focusNode: _passwordFocus,
-                              autovalidateMode: AutovalidateMode.onUserInteraction,
+                              autovalidateMode:
+                                  AutovalidateMode.onUserInteraction,
                               decoration: InputDecoration(
                                 labelText: "Password",
                                 suffixIcon: IconButton(
@@ -212,7 +215,8 @@ class _signupPageState extends State<signUp> {
                               validator: _validatePhone,
                               keyboardType: TextInputType.phone,
                               focusNode: _phoneNumberFocus,
-                              autovalidateMode: AutovalidateMode.onUserInteraction,
+                              autovalidateMode:
+                                  AutovalidateMode.onUserInteraction,
                               decoration: InputDecoration(
                                   labelText: "Phone Number",
                                   suffixIcon: Icon(
@@ -228,20 +232,20 @@ class _signupPageState extends State<signUp> {
                               // Implement login action
                               child: state.status == AuthStatus.loading
                                   ? const CircularProgressIndicator(
-                                  color: Colors.white)
+                                      color: Colors.white)
                                   : Center(
-                                  child: Text(
-                                    'Sign Up',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyLarge!
-                                        .copyWith(
-                                      color: isDarkMode
-                                          ? kContentColorDarkTheme
-                                          : kContentColorLightTheme,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  )),
+                                      child: Text(
+                                      'Sign Up',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge!
+                                          .copyWith(
+                                            color: isDarkMode
+                                                ? kContentColorDarkTheme
+                                                : kContentColorLightTheme,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                    )),
                             ),
                             SizedBox(
                               height: mq.height * 0.03,
@@ -250,34 +254,36 @@ class _signupPageState extends State<signUp> {
                               children: [
                                 Expanded(
                                     child: Divider(
-                                      color: isDarkMode
-                                          ? kContentColorLightTheme
-                                          : kPrimaryColor,
-                                    )),
+                                  color: isDarkMode
+                                      ? kContentColorLightTheme
+                                      : kPrimaryColor,
+                                )),
                                 Padding(
                                   padding:
-                                  const EdgeInsets.symmetric(horizontal: 5),
+                                      const EdgeInsets.symmetric(horizontal: 5),
                                   child: Text('Or SignUp with'),
                                 ),
                                 Expanded(
                                     child: Divider(
-                                      color: isDarkMode
-                                          ? kContentColorLightTheme
-                                          : kPrimaryColor,
-                                    ))
+                                  color: isDarkMode
+                                      ? kContentColorLightTheme
+                                      : kPrimaryColor,
+                                ))
                               ],
                             ),
                             SizedBox(
                               height:
-                              mq.height * 0.008 < 0 ? 0 : mq.height * 0.008,
+                                  mq.height * 0.008 < 0 ? 0 : mq.height * 0.008,
                             ),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: [
                                 InkWell(
                                   splashColor:
-                                  isDarkMode ? Colors.white : Colors.grey,
-                                  onTap: (){getit<cubitAuth>().googleSignIn();},
+                                      isDarkMode ? Colors.white : Colors.grey,
+                                  onTap: () {
+                                    getit<cubitAuth>().googleSignIn();
+                                  },
                                   child: Image(
                                       width: 25,
                                       image: AssetImage(
@@ -316,9 +322,9 @@ class _signupPageState extends State<signUp> {
                                             .textTheme
                                             .bodyMedium!
                                             .copyWith(
-                                            color: kPrimaryColor,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 15),
+                                                color: kPrimaryColor,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 15),
                                       ),
                                     )
                                   ]),

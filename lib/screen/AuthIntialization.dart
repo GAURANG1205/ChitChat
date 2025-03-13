@@ -1,7 +1,7 @@
 import 'package:chitchat/Data/Repository/template/service_locator.dart';
 import 'package:chitchat/router/app_router.dart';
-import 'package:chitchat/screen/chatScreen.dart';
-import 'package:chitchat/screen/loginPage.dart';
+import 'package:chitchat/screen/HomeScreen.dart';
+import 'package:chitchat/screen/LoginPageScreen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -10,7 +10,7 @@ import 'package:flutter_native_splash/flutter_native_splash.dart';
 import '../Logic/AuthState.dart';
 import '../Logic/cubitAuth.dart';
 
-class Authintialization extends StatelessWidget {
+class AuthIntialization extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocListener<cubitAuth, AuthState>(

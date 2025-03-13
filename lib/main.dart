@@ -1,14 +1,16 @@
 
 import 'package:chitchat/router/app_router.dart';
-import 'package:chitchat/screen/chatScreen.dart';
-import 'package:chitchat/screen/loginPage.dart';
-import 'package:chitchat/screen/signup.dart';
+import 'package:chitchat/screen/HomeScreen.dart';
+import 'package:chitchat/screen/LoginPageScreen.dart';
+import 'package:chitchat/screen/SignUpScreen.dart';
 import 'package:chitchat/screen/AuthIntialization.dart';
 import 'package:chitchat/Theme/theme.dart';
 import 'package:chitchat/Data/Repository/template/service_locator.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
+import 'package:get/get_navigation/src/root/get_material_app.dart';
 // import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'Logic/cubitAuth.dart';
 import 'firebase_options.dart';
@@ -20,6 +22,7 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterError;
   runApp(const MyApp());
 }
 
@@ -34,14 +37,14 @@ class MyApp extends StatelessWidget {
         create: (context) => getit<cubitAuth>(),
     ),
     ],
-    child: MaterialApp(
+    child: GetMaterialApp(
         debugShowCheckedModeBanner: false,
         navigatorKey: getit<AppRouter>().navigatorKey,
         theme: lightThemeData(context),
         darkTheme: darkThemeData(context),
         themeMode: ThemeMode.system,
         title: 'Chit Chat',
-        home: Authintialization()));
+        home: AuthIntialization()));
   }
 }
 

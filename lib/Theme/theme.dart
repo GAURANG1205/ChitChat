@@ -2,10 +2,6 @@ import 'colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-// This is our  main focus
-// Let's apply light and dark theme on our app
-// Now let's add dark theme on our app
-
 ThemeData lightThemeData(BuildContext context) {
   return ThemeData.light().copyWith(
       primaryColor: kPrimaryColor,
@@ -16,26 +12,22 @@ ThemeData lightThemeData(BuildContext context) {
           .apply(bodyColor: kContentColorDarkTheme),
       colorScheme: const ColorScheme.light(
         primary: kPrimaryColor,
-        error: kErrorColor,
       ),
       navigationBarTheme: NavigationBarThemeData(
         elevation: 0,
         backgroundColor: kContentColorLightTheme,
         indicatorColor: kPrimaryColor.withOpacity(0.2),
-        // Color of the selected item indicator
         labelTextStyle: WidgetStateProperty.resolveWith<TextStyle>(
             (Set<WidgetState> states) {
           if (states.contains(WidgetState.selected)) {
             return TextStyle(
               color: kContentColorDarkTheme.withOpacity(0.7),
-              // Selected label color
               fontWeight: FontWeight.bold,
               fontSize: 14,
             );
           }
           return TextStyle(
             color: kContentColorDarkTheme.withOpacity(0.32),
-            // Unselected label color
             fontSize: 14,
           );
         }),
@@ -43,9 +35,8 @@ ThemeData lightThemeData(BuildContext context) {
             (Set<WidgetState> states) {
           return IconThemeData(
             color: states.contains(WidgetState.selected)
-                ? kPrimaryColor // Selected icon color
+                ? kPrimaryColor
                 : kContentColorDarkTheme.withOpacity(0.32),
-            // Unselected icon color,
           );
         }),
       ),
@@ -86,26 +77,23 @@ ThemeData darkThemeData(BuildContext context) {
         .apply(bodyColor: kContentColorLightTheme),
     colorScheme: const ColorScheme.dark().copyWith(
       primary: kPrimaryColor,
-      error: kErrorColor,
     ),
     navigationBarTheme: NavigationBarThemeData(
         elevation: 0,
         backgroundColor: kContentColorDarkTheme,
         indicatorColor: kPrimaryColor.withOpacity(0.2),
-        // Color of the selected item indicator
         labelTextStyle: WidgetStateProperty.resolveWith<TextStyle>(
             (Set<WidgetState> states) {
           if (states.contains(WidgetState.selected)) {
             return TextStyle(
               color: kContentColorLightTheme.withOpacity(0.7),
-              // Selected label color
               fontSize: 14,
               fontWeight: FontWeight.w800,
             );
           }
           return TextStyle(
             color: kContentColorLightTheme.withOpacity(0.32),
-            // Unselected label color
+
             fontSize: 14,
           );
         }),
@@ -113,7 +101,7 @@ ThemeData darkThemeData(BuildContext context) {
             (Set<WidgetState> states) {
           return IconThemeData(
             color: states.contains(WidgetState.selected)
-                ? kPrimaryColor // Selected icon color
+                ? kPrimaryColor
                 : kContentColorLightTheme
                     .withOpacity(0.32), // Unselected icon color
           );

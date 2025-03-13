@@ -4,8 +4,9 @@ import 'package:chitchat/Data/Repository/authRepository.dart';
 import 'package:chitchat/Logic/AuthState.dart';
 import 'package:chitchat/Theme/colors.dart';
 import 'package:chitchat/router/app_router.dart';
-import 'package:chitchat/screen/chatScreen.dart';
-import 'package:chitchat/screen/signup.dart';
+import 'package:chitchat/screen/HomeScreen.dart';
+import 'package:chitchat/screen/PhoneNumberScreen.dart';
+import 'package:chitchat/screen/SignUpScreen.dart';
 import 'package:chitchat/Data/Repository/template/service_locator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -77,6 +78,9 @@ class _LoginPageState extends State<loginPage> {
             getit<AppRouter>().pushAndRemoveUntil(chatScreen());
           } else if (state.status == AuthStatus.error && state.error != null) {
             ScaffoldMessage.showSnackBar(context, message: state.error!,isError: state.error!=null);
+          }
+    else if (state.status == AuthStatus.needPhoneNumber) {
+            getit<AppRouter>().push(phoneNumberScreen(userModel: state.user!,));
           }
           else if(state.status==AuthStatus.loading){
             CircularProgressIndicator(color: Colors.white,);

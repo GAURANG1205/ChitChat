@@ -6,6 +6,7 @@ enum AuthStatus {
   authenticated,
   unauthenticated,
   error,
+  needPhoneNumber
 }
 
 class AuthState extends Equatable{

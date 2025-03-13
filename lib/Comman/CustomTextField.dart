@@ -4,6 +4,7 @@ import 'package:flutter/src/material/input_decorator.dart';
 
 class CustomTextField extends StatelessWidget {
   final TextEditingController textEditingController;
+  final TextCapitalization textCapitalization;
   final TextInputType? keyboardType;
   final bool obscureText;
   final Widget? prefixIcon;
@@ -21,7 +22,8 @@ class CustomTextField extends StatelessWidget {
     this.decoration,
     this.validator,
     this.focusNode,
-    this.autovalidateMode
+    this.autovalidateMode,
+    this.textCapitalization = TextCapitalization.sentences
   });
 
   @override
