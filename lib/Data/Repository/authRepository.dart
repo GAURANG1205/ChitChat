@@ -77,6 +77,7 @@ class AuthRepository extends RepoTemplate {
   }
   Future<UserModel> googleSignIn() async {
     try {
+      await _googleSignIn.signOut();
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) throw 'Google Sign-In canceled by user';
 

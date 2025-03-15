@@ -92,15 +92,15 @@ class contactScreenState extends State<contactScreen> {
             child: FutureBuilder<List<Map<String, dynamic>>>(
               future: ContactRepository().getRegisteredContacts(),
               builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
                 if (snapshot.hasError) {
                   return Center(
                     child: Text("Error: ${snapshot.error}"),
                   );
                 }
-                if (!snapshot.hasData) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                final contacts = snapshot.data!;
+                final contacts = snapshot.data??[];
                 if (contacts.isEmpty) {
                   return const Center(child: Text("No contacts found"));
                 }
@@ -126,7 +126,6 @@ class contactScreenState extends State<contactScreen> {
                                   receiverName: contact['name'],
                                 ),
                             transition: Transition.rightToLeft);
-
                       },
                     );
                   },

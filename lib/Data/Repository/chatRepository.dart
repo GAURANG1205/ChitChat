@@ -3,6 +3,7 @@ import 'package:chitchat/Data/Repository/template/RepoTemplate.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../Model/chat_model.dart';
+import '../Model/user_model.dart';
 
 class ChatRepository extends RepoTemplate {
   CollectionReference get _chatRooms => firestore.collection("chatRooms");
@@ -114,55 +115,71 @@ class ChatRepository extends RepoTemplate {
   Stream<int> getUnReadCount(String chatRoomId, String userId) {
     return getChatRoomMessages(chatRoomId)
         .where("receiverId", isEqualTo: userId)
-        .where("readBy", arrayContains: userId)
+        .where('status', isEqualTo: MessageStatus.sent.toString())
         .snapshots()
-        .map((snapshot) {
-      final unreadMessages = snapshot.docs.where((doc) {
-        final data = doc.data() as Map<String, dynamic>;
-        final List<dynamic> readBy = data["readBy"] ?? [];
-        return !readBy.contains(userId);
-      }).length;
-      return unreadMessages;
-    });
+        .map((snapshot) => snapshot.docs.length);
   }
+
 
   Future<void> markMessagesAsRead(String chatRoomId, String userId) async {
     try {
       final batch = firestore.batch();
+
       final unreadMessages = await getChatRoomMessages(chatRoomId)
-          .where("receiverId", isEqualTo: userId)
+          .where(
+        "receiverId",
+        isEqualTo: userId,
+      )
+          .where('status', isEqualTo: MessageStatus.sent.toString())
           .get();
+      print("found ${unreadMessages.docs.length} unread messages");
 
-      final messagesToUpdate = unreadMessages.docs.where((doc) {
-        final data = doc.data() as Map<String, dynamic>;
-        final List<dynamic> readBy = data["readBy"] ?? [];
-        return !readBy.contains(userId);
-      }).toList();
-
-      if (messagesToUpdate.isEmpty) return;
-
-      for (final doc in messagesToUpdate) {
+      for (final doc in unreadMessages.docs) {
         batch.update(doc.reference, {
           'readBy': FieldValue.arrayUnion([userId]),
-          'status': "read",
+          'status': MessageStatus.read.toString(),
         });
+        await batch.commit();
+        print("Marked messaegs as read for user $userId");
       }
-      await batch.commit();
-    } catch (e) {
-      print("Error marking messages as read: $e");
-    }
+    } catch (e) {}
   }
-  Stream<Map<String, dynamic>> getUserOnlineStatus(String userId) {
+  Future<DocumentSnapshot> getChatRoomDocument(String chatRoomId) {
+    return _chatRooms.doc(chatRoomId).get();
+  }
+  Future<void> blockUser(String currentUserId, String blockedUserId) async {
+    final userRef = firestore.collection("users").doc(currentUserId);
+    await userRef.update({
+      'blockedUsers': FieldValue.arrayUnion([blockedUserId])
+    });
+  }
+
+  Future<void> unBlockUser(String currentUserId, String blockedUserId) async {
+    final userRef = firestore.collection("users").doc(currentUserId);
+    await userRef.update({
+      'blockedUsers': FieldValue.arrayRemove([blockedUserId])
+    });
+  }
+
+  Stream<bool> isUserBlocked(String currentUserId, String otherUserId) {
     return firestore
         .collection("users")
-        .doc(userId)
+        .doc(currentUserId)
         .snapshots()
-        .map((snapshot) {
-      final data = snapshot.data();
-      return {
-        'isOnline': data?['isOnline'] ?? false,
-        'lastSeen': data?['lastSeen'],
-      };
+        .map((doc) {
+      final userData = UserModel.fromFirestore(doc);
+      return userData.blockedUsers.contains(otherUserId);
+    });
+  }
+
+  Stream<bool> amIBlocked(String currentUserId, String otherUserId) {
+    return firestore
+        .collection("users")
+        .doc(otherUserId)
+        .snapshots()
+        .map((doc) {
+      final userData = UserModel.fromFirestore(doc);
+      return userData.blockedUsers.contains(currentUserId);
     });
   }
 }

@@ -27,7 +27,7 @@ class ChatListTile extends StatelessWidget {
       orElse: () => '',
     );
     if (otherUserId.isEmpty) return "Unknown User";
-    return contactNameMap[otherUserId]??
+    return contactNameMap[otherUserId]??chat.participantsName![otherUserId]??
         "Unknown User";
   }
 
@@ -36,7 +36,7 @@ class ChatListTile extends StatelessWidget {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return ListTile(
         onTap: onTap,
-        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        contentPadding: EdgeInsets.symmetric(horizontal: 5, vertical: 2),
         leading: CircleAvatar(
           backgroundImage: AssetImage("assets/icon/Unknown.jpg") as ImageProvider,
         ),

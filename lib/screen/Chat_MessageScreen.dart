@@ -52,6 +52,7 @@ class _ChatMessageScreenState extends State<ChatMessageScreen> {
   void dispose() {
     super.dispose();
     messageTextController.dispose();
+    _chatCubit.leaveChat();
   }
 
   @override
@@ -61,36 +62,85 @@ class _ChatMessageScreenState extends State<ChatMessageScreen> {
     return Scaffold(
         appBar: AppBar(
           titleSpacing: 0,
-          title: Row(
+          title: Flex(
             mainAxisSize: MainAxisSize.min,
+            direction:Axis.horizontal,
             children: [
-              CircleAvatar(
-                radius: mq.width * 0.045,
-                backgroundImage: AssetImage("assets/icon/Unknown.jpg"),
+              Flexible(
+                flex: 1,
+                child: CircleAvatar(
+                  radius: mq.width * 0.045,
+                  backgroundImage: AssetImage("assets/icon/Unknown.jpg"),
+                ),
               ),
               SizedBox(width: mq.width * 0.0158),
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(
-                  widget.receiverName,
-                  style: TextStyle(
-                    fontSize: mq.width * 0.0455,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                Text(
-                  "Online",
-                  style: TextStyle(
-                    color: Colors.green,
-                    fontSize: mq.width * 0.03,
-                  ),
-                ),
-              ])
+              Flexible(
+                flex: 1,
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(
+                      widget.receiverName,
+                      style: TextStyle(
+                        fontSize: mq.width * 0.0455,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                ]),
+              )
             ],
           ),
           actions: [
             IconButton(onPressed: () {}, icon: Icon(Icons.videocam_outlined)),
             IconButton(onPressed: () {}, icon: Icon(Icons.call_outlined)),
-            IconButton(onPressed: () {}, icon: Icon(Icons.more_vert_outlined)),
+            BlocBuilder<ChatCubit, ChatState>(
+                bloc: _chatCubit,
+                builder: (context, state) {
+                  if (state.isUserBlocked) {
+                    return TextButton.icon(
+                      onPressed: () => _chatCubit.unBlockUser(widget.receiverId),
+                      label: const Text(
+                        "Unblock",
+                      ),
+                      icon: const Icon(Icons.block),
+                    );
+                  }
+                  return PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert),
+                    onSelected: (value) async {
+                      if (value == "block") {
+                        final bool? confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: Text(
+                                "Are you sure you want to block ${widget.receiverName}"),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                child: const Text("Cancel"),
+                              ),
+                              TextButton(
+                                  onPressed: () => Navigator.pop(context, true),
+                                  child: const Text(
+                                    "Block",
+                                    style: TextStyle(color: Colors.red),
+                                  ))
+                            ],
+                          ),
+                        );
+                        if (confirm == true) {
+                          await _chatCubit.blockUser(widget.receiverId);
+                        }
+                      }
+                    },
+                    itemBuilder: (context) => <PopupMenuEntry<String>>[
+                      const PopupMenuItem(
+                        value: 'block',
+                        child: Text("Block User"),
+                      )
+                    ],
+                  );
+                })
           ],
         ),
         body: BlocBuilder<ChatCubit, ChatState>(
@@ -106,6 +156,18 @@ class _ChatMessageScreenState extends State<ChatMessageScreen> {
             }
             return Column(
               children: [
+                if (state.amIBlocked)
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    color: Colors.red.withOpacity(0.1),
+                    child: Text(
+                      "You have been blocked by ${widget.receiverName}",
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.red,
+                      ),
+                    ),
+                  ),
                 Expanded(
                   child: ListView.builder(
                       reverse: true,
@@ -118,6 +180,7 @@ class _ChatMessageScreenState extends State<ChatMessageScreen> {
                         return MessageBubble(Message: messsage, isMe: isMe);
                       }),
                 ),
+                if (!state.amIBlocked && !state.isUserBlocked)
                 Padding(
                   padding: EdgeInsets.only(bottom: 12, top: 10),
                   child: Column(

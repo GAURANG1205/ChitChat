@@ -4,7 +4,7 @@ import 'package:chitchat/Data/Repository/authRepository.dart';
 import 'package:chitchat/Logic/AuthState.dart';
 import 'package:chitchat/Theme/colors.dart';
 import 'package:chitchat/router/app_router.dart';
-import 'package:chitchat/screen/HomeScreen.dart';
+import 'package:chitchat/screen/ChatScreen.dart';
 import 'package:chitchat/screen/PhoneNumberScreen.dart';
 import 'package:chitchat/screen/SignUpScreen.dart';
 import 'package:chitchat/Data/Repository/template/service_locator.dart';

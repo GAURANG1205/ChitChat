@@ -57,6 +57,37 @@ class ChatMessage {
       "readBy": readBy,
     };
   }
+  factory ChatMessage.fromMap(Map<String, dynamic> map) {
+    return ChatMessage(
+      id: map['id'],
+      chatRoomId: map['chatRoomId'],
+      senderId: map['senderId'],
+      receiverId: map['receiverId'],
+      content: map['content'],
+      type: MessageType.values.firstWhere(
+              (e) => e.toString() == map['type'],
+          orElse: () => MessageType.text),
+      status: MessageStatus.values.firstWhere(
+              (e) => e.toString() == map['status'],
+          orElse: () => MessageStatus.sent),
+      timestamp: Timestamp.fromMillisecondsSinceEpoch(map['timestamp']),
+      readBy: map['readBy'] != null ? (map['readBy'] as String).split(',') : [],
+    );
+  }
+  //convert model to sqlfLiteDatasasdsadsa
+  Map<String, dynamic> toSQLiteMap() {
+    return {
+      "id": id,
+      "chatRoomId": chatRoomId,
+      "senderId": senderId,
+      "receiverId": receiverId,
+      "content": content,
+      "type": type.toString(),
+      "status": status.toString(),
+      "timestamp": timestamp.millisecondsSinceEpoch,
+      "readBy": readBy.join(','),
+    };
+  }
 
   ChatMessage copyWith({
     String? id,

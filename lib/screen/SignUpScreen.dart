@@ -10,7 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../router/app_router.dart';
-import 'HomeScreen.dart';
+import 'ChatScreen.dart';
 
 class signUp extends StatefulWidget {
   const signUp({super.key});

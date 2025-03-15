@@ -12,6 +12,8 @@ class ChatCubit extends Cubit<ChatState>{
   final String currentUserId;
   bool _isInChat = false;
  StreamSubscription? _chatMessageSubscription;
+  StreamSubscription? _blockStatusSubscription;
+  StreamSubscription? _amIBlockStatusSubscription;
   ChatCubit({
     required ChatRepository chatRepository,
     required this.currentUserId,
@@ -29,7 +31,10 @@ class ChatCubit extends Cubit<ChatState>{
         receiverId: receiverId,
         status: ChatStatus.loaded,
       ));
+
       _getUserMessge(chatRoom.id);
+      BlocOtherUser(receiverId);
+
     } catch (e) {
       emit(state.copyWith(
           status: ChatStatus.error, error: "Failed to create chat room $e"));
@@ -38,6 +43,7 @@ class ChatCubit extends Cubit<ChatState>{
   Future<void> sendMessage(
       {required String content, required String receiverId}) async {
     if (state.chatRoomId == null) return;
+
     try {
       await _chatRepository.sendMessage(
         chatRoomId: state.chatRoomId!,
@@ -52,14 +58,14 @@ class ChatCubit extends Cubit<ChatState>{
   }
   void onChatScreenOpened() {
     if (state.chatRoomId != null) {
-      _markMessagesAsRead(state.chatRoomId!);  // Mark messages as read
+      _markMessagesAsRead(state.chatRoomId!);
     }
   }
   void _getUserMessge(String chatRoomId) {
     _chatMessageSubscription?.cancel();
     _chatMessageSubscription =
         _chatRepository.getMessages(chatRoomId).listen((messages) {
-          if (_isInChat && messages.isNotEmpty) {
+          if (_isInChat) {
             _markMessagesAsRead(chatRoomId);
           }
           emit(
@@ -75,8 +81,8 @@ class ChatCubit extends Cubit<ChatState>{
           );
         });
   }
+
   Future<void> _markMessagesAsRead(String chatRoomId) async {
-    if (!_isInChat) return;
     try {
       await _chatRepository.markMessagesAsRead(chatRoomId, currentUserId);
     } catch (e) {
@@ -84,8 +90,46 @@ class ChatCubit extends Cubit<ChatState>{
     }
   }
 
+  Future<void> blockUser(String userId) async {
+    try {
+      await _chatRepository.blockUser(currentUserId, userId);
+    } catch (e) {
+      emit(
+        state.copyWith(error: 'failed to block user $e'),
+      );
+    }
+  }
+  Future<void> unBlockUser(String userId) async {
+    try {
+      await _chatRepository.unBlockUser(currentUserId, userId);
+    } catch (e) {
+      emit(
+        state.copyWith(error: 'failed to unblock user $e'),
+      );
+    }
+  }
+  void BlocOtherUser(String otherUserId) {
+    _blockStatusSubscription?.cancel();
+    _blockStatusSubscription = _chatRepository
+        .isUserBlocked(currentUserId, otherUserId)
+        .listen((isBlocked) {
+      emit(
+        state.copyWith(isUserBlocked: isBlocked),
+      );
+
+      _amIBlockStatusSubscription?.cancel();
+      _blockStatusSubscription = _chatRepository
+          .amIBlocked(currentUserId, otherUserId)
+          .listen((isBlocked) {
+        emit(
+          state.copyWith(amIBlocked: isBlocked),
+        );
+      });
+    }, onError: (error) {
+      print("error getting online status");
+    });
+  }
   Future<void> leaveChat() async {
     _isInChat = false;
-    _chatMessageSubscription?.cancel();
   }
 }

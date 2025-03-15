@@ -1,6 +1,6 @@
 import 'package:chitchat/Data/Repository/template/service_locator.dart';
 import 'package:chitchat/router/app_router.dart';
-import 'package:chitchat/screen/HomeScreen.dart';
+import 'package:chitchat/screen/ChatScreen.dart';
 import 'package:chitchat/screen/LoginPageScreen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -26,9 +26,8 @@ class AuthIntialization extends StatelessWidget {
       child: BlocBuilder<cubitAuth, AuthState>(
         builder: (context, state) {
           if (state.status == AuthStatus.loading) {
-            return Container(); // Keep splash visible
+            return Container();
           }
-
           return Scaffold(
             body: Center(
               child: CircularProgressIndicator(),

@@ -41,7 +41,6 @@ class _chatScreenState extends State<chatScreen> {
       Get.snackbar("Permission Required", "Please enable contact permissions.");
       return;
     }
-
     final contacts = await ContactRepository().getRegisteredContacts();
     if (mounted) {
       setState(() {
@@ -91,7 +90,7 @@ class _chatScreenState extends State<chatScreen> {
           )
         ],
       ),
-      body: Padding(
+      body: _isLoadingContacts?Center(child: CircularProgressIndicator(),): Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(
           children: [
@@ -176,7 +175,7 @@ class _chatScreenState extends State<chatScreen> {
           final hasPermission =
               await ContactRepository().requestContactsPermission();
           if (hasPermission) {
-            Get.to(() => const contactScreen(),
+           await Get.to(() => const contactScreen(),
                 transition: Transition.rightToLeft);
           } else {
             Get.snackbar("Permission Required",

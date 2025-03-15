@@ -8,9 +8,6 @@ class ChatRoomModel {
   final Timestamp? lastMessageTime;
   final Map<String, Timestamp>? lastReadTime;
   final Map<String, String>? participantsName;
-  final bool isTyping;
-  final String? typingUserId;
-  final bool isCallActive;
 
   ChatRoomModel(
       {required this.id,
@@ -20,9 +17,7 @@ class ChatRoomModel {
         this.lastMessageTime,
         Map<String, Timestamp>? lastReadTime,
         Map<String, String>? participantsName,
-        this.isTyping = false,
-        this.typingUserId,
-        this.isCallActive = false})
+       })
       : lastReadTime = lastReadTime ?? {},
         participantsName = participantsName ?? {};
 
@@ -40,9 +35,6 @@ class ChatRoomModel {
       participantsName: Map<String, String>.from(
         data['participantsName'] ?? {},
       ),
-      isTyping: data['isTyping'] ?? false,
-      typingUserId: data['typingUserId'],
-      isCallActive: data['isCallActive'] ?? false,
     );
   }
 
@@ -53,10 +45,7 @@ class ChatRoomModel {
       'lastMessageSenderId': lastMessageSenderId,
       'lastMessageTime': lastMessageTime,
       'lastReadTime': lastReadTime,
-      'isTyping': isTyping,
       'participantsName': participantsName,
-      'typingUserId': typingUserId,
-      'isCallActive': isCallActive,
     };
   }
 }

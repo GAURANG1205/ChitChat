@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:developer';
 import 'package:chitchat/Data/Repository/template/RepoTemplate.dart';
+import 'package:chitchat/localDb/ContactLocal.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:flutter/foundation.dart'; // For compute()
@@ -9,7 +10,7 @@ import '../Model/user_model.dart';
 
 class ContactRepository extends RepoTemplate {
   String get currentUserId => auth.currentUser?.uid ?? '';
-
+  final Contactlocal _localDb = Contactlocal();
   Future<bool> requestContactsPermission() async {
     return await FlutterContacts.requestPermission();
   }
@@ -21,15 +22,20 @@ class ContactRepository extends RepoTemplate {
     }
     return cleanNumber;
   }
-
   Future<List<Map<String, dynamic>>> getRegisteredContacts() async {
+    final cachedContacts = await _localDb.getCachedContacts();
+    if (cachedContacts.isNotEmpty) {
+      return cachedContacts;
+    }
+
     try {
       final contacts = await FlutterContacts.getContacts(
         withProperties: true,
         withPhoto: true,
       );
+
       final List<Map<String, dynamic>> phoneNumbers =
-          await compute(_normalizeContacts, contacts);
+      await compute(_normalizeContacts, contacts);
 
       final usersSnapshot = await firestore.collection("users").get();
       final registeredUsers = usersSnapshot.docs
@@ -40,6 +46,7 @@ class ContactRepository extends RepoTemplate {
         for (var user in registeredUsers)
           normalizePhoneNumber(user.phoneNumber): user
       };
+
       final matchedContacts = <Map<String, dynamic>>[];
       for (var contact in phoneNumbers) {
         String phoneNumber = contact["phoneNumber"];
@@ -55,24 +62,33 @@ class ContactRepository extends RepoTemplate {
         }
       }
 
+      await _localDb.saveContacts(matchedContacts);
+
       return matchedContacts;
     } catch (e) {
-      log("Error getting registered users: $e");
       return [];
     }
   }
 
   List<Map<String, dynamic>> _normalizeContacts(List<Contact> contacts) {
+    Set<String> uniqueNumbers = {};
+
     return contacts
         .where((contact) => contact.phones.isNotEmpty)
         .map((contact) {
-      String normalizedPhone =
-          normalizePhoneNumber(contact.phones.first.number);
+      String normalizedPhone = normalizePhoneNumber(contact.phones.first.number);
+      if (uniqueNumbers.contains(normalizedPhone)) {
+        return null;
+      }
+      uniqueNumbers.add(normalizedPhone);
       return {
         'name': contact.displayName,
         'phoneNumber': normalizedPhone,
         'photo': contact.photo,
       };
-    }).toList();
+    })
+        .where((contact) => contact != null)
+        .cast<Map<String, dynamic>>()
+        .toList();
   }
 }

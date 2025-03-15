@@ -1,6 +1,6 @@
 
 import 'package:chitchat/router/app_router.dart';
-import 'package:chitchat/screen/HomeScreen.dart';
+import 'package:chitchat/screen/ChatScreen.dart';
 import 'package:chitchat/screen/LoginPageScreen.dart';
 import 'package:chitchat/screen/SignUpScreen.dart';
 import 'package:chitchat/screen/AuthIntialization.dart';
