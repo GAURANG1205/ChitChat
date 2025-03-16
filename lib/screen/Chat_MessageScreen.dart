@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:chitchat/Comman/CustomTextField.dart';
@@ -6,6 +7,7 @@ import 'package:chitchat/Logic/chat/chatCubit.dart';
 import 'package:chitchat/Logic/chat/chat_state.dart';
 import 'package:chitchat/Theme/colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -29,12 +31,16 @@ class ChatMessageScreen extends StatefulWidget {
 class _ChatMessageScreenState extends State<ChatMessageScreen> {
   final messageTextController = TextEditingController();
   late final ChatCubit _chatCubit;
+  final _scrollController = ScrollController();
+  List<ChatMessage> _previousMessages = [];
+  bool _showEmoji = false;
 
   @override
   void initState() {
     _chatCubit = getit<ChatCubit>();
     _chatCubit.enterChat(widget.receiverId);
     _chatCubit.onChatScreenOpened();
+    _scrollController.addListener(_onScroll);
     super.initState();
   }
 
@@ -48,10 +54,32 @@ class _ChatMessageScreenState extends State<ChatMessageScreen> {
     setState(() {});
   }
 
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      _chatCubit.loadMoreMessages();
+    }
+  }
+
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(0,
+          duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+    }
+  }
+
+  void _hasNewMessages(List<ChatMessage> messages) {
+    if (messages.length != _previousMessages.length) {
+      _scrollToBottom();
+      _previousMessages = messages;
+    }
+  }
+
   @override
   void dispose() {
     super.dispose();
     messageTextController.dispose();
+    _scrollController.dispose();
     _chatCubit.leaveChat();
   }
 
@@ -64,7 +92,7 @@ class _ChatMessageScreenState extends State<ChatMessageScreen> {
           titleSpacing: 0,
           title: Flex(
             mainAxisSize: MainAxisSize.min,
-            direction:Axis.horizontal,
+            direction: Axis.horizontal,
             children: [
               Flexible(
                 flex: 1,
@@ -76,15 +104,17 @@ class _ChatMessageScreenState extends State<ChatMessageScreen> {
               SizedBox(width: mq.width * 0.0158),
               Flexible(
                 flex: 1,
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(
-                      widget.receiverName,
-                      style: TextStyle(
-                        fontSize: mq.width * 0.0455,
-                        fontWeight: FontWeight.w500,
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.receiverName,
+                        style: TextStyle(
+                          fontSize: mq.width * 0.0455,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                    ),
-                ]),
+                    ]),
               )
             ],
           ),
@@ -96,7 +126,8 @@ class _ChatMessageScreenState extends State<ChatMessageScreen> {
                 builder: (context, state) {
                   if (state.isUserBlocked) {
                     return TextButton.icon(
-                      onPressed: () => _chatCubit.unBlockUser(widget.receiverId),
+                      onPressed: () =>
+                          _chatCubit.unBlockUser(widget.receiverId),
                       label: const Text(
                         "Unblock",
                       ),
@@ -143,7 +174,10 @@ class _ChatMessageScreenState extends State<ChatMessageScreen> {
                 })
           ],
         ),
-        body: BlocBuilder<ChatCubit, ChatState>(
+        body: BlocConsumer<ChatCubit, ChatState>(
+          listener: (context, state) {
+            _hasNewMessages(state.messages);
+          },
           bloc: _chatCubit,
           builder: (context, state) {
             if (state.status == ChatStatus.loading) {
@@ -170,6 +204,7 @@ class _ChatMessageScreenState extends State<ChatMessageScreen> {
                   ),
                 Expanded(
                   child: ListView.builder(
+                      controller: _scrollController,
                       reverse: true,
                       itemCount: state.messages.length,
                       itemBuilder: (context, index) {
@@ -181,62 +216,108 @@ class _ChatMessageScreenState extends State<ChatMessageScreen> {
                       }),
                 ),
                 if (!state.amIBlocked && !state.isUserBlocked)
-                Padding(
-                  padding: EdgeInsets.only(bottom: 12, top: 10),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                                keyboardType: TextInputType.multiline,
-                                controller: messageTextController,
-                                minLines: 1,
-                                maxLines: 5,
-                                decoration: InputDecoration(
-                                    contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                                    prefixIcon: IconButton(
-                                        onPressed: () {},
-                                        icon: Icon(
-                                            Icons.emoji_emotions_outlined,
-                                            color: isDarkMode
-                                                ? Color.fromRGBO(
-                                                    201, 201, 201, 1)
-                                                : Color.fromRGBO(
-                                                    107, 123, 129, 1))),
-                                    hintText: "Type a Message",
-                                    hintStyle: TextStyle(
-                                        color: isDarkMode
-                                            ? Color.fromRGBO(204, 204, 206, 1)
-                                            : Color.fromRGBO(107, 123, 129, 1),
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold),
-                                    filled: true,
-                                    fillColor:
-                                        Color.fromRGBO(133, 143, 154, 100),
-                                    border: OutlineInputBorder(
-                                        borderSide: BorderSide.none,
-                                        borderRadius: BorderRadius.circular(50)),
-                                    focusedBorder: OutlineInputBorder(borderSide: BorderSide.none, borderRadius: BorderRadius.circular(50)))),
-                          ),
-                          ElevatedButton(
-                            onPressed: _handleSendMessage,
-                            style: ElevatedButton.styleFrom(
-                              shape: CircleBorder(),
-                              padding: EdgeInsets.all(12),
-                              backgroundColor: isDarkMode
-                                  ? kPrimaryColor.withOpacity(0.6)
-                                  : kPrimaryColor.withOpacity(0.9),
+                  Padding(
+                    padding: EdgeInsets.only(bottom: 12, top: 10),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                  onTap: () {
+                                    if (_showEmoji) {
+                                      setState(() {
+                                        _showEmoji = false;
+                                      });
+                                    }
+                                  },
+                                  keyboardType: TextInputType.multiline,
+                                  controller: messageTextController,
+                                  minLines: 1,
+                                  maxLines: 5,
+                                  decoration: InputDecoration(
+                                      contentPadding: EdgeInsets.symmetric(
+                                          horizontal: 20, vertical: 15),
+                                      prefixIcon: IconButton(
+                                          onPressed: () {
+                                            setState(() {
+                                              _showEmoji = !_showEmoji;
+                                              if (_showEmoji) {
+                                                FocusScope.of(context).unfocus();
+                                              }
+                                            });
+                                          },
+                                          icon: Icon(
+                                              Icons.emoji_emotions_outlined,
+                                              color: isDarkMode
+                                                  ? Color.fromRGBO(
+                                                      201, 201, 201, 1)
+                                                  : Color.fromRGBO(
+                                                      107, 123, 129, 1))),
+                                      hintText: "Type a Message",
+                                      hintStyle: TextStyle(
+                                          color: isDarkMode
+                                              ? Color.fromRGBO(204, 204, 206, 1)
+                                              : Color.fromRGBO(
+                                                  107, 123, 129, 1),
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold),
+                                      filled: true,
+                                      fillColor:
+                                          Color.fromRGBO(133, 143, 154, 100),
+                                      border: OutlineInputBorder(
+                                          borderSide: BorderSide.none,
+                                          borderRadius: BorderRadius.circular(50)),
+                                      focusedBorder: OutlineInputBorder(borderSide: BorderSide.none, borderRadius: BorderRadius.circular(50)))),
                             ),
-                            child: Icon(Icons.send,
-                                color:
-                                    isDarkMode ? Colors.black : Colors.white),
-                          )
-                        ],
-                      )
-                    ],
+                            ElevatedButton(
+                              onPressed: _handleSendMessage,
+                              style: ElevatedButton.styleFrom(
+                                shape: CircleBorder(),
+                                padding: EdgeInsets.all(12),
+                                backgroundColor: isDarkMode
+                                    ? kPrimaryColor.withOpacity(0.6)
+                                    : kPrimaryColor.withOpacity(0.9),
+                              ),
+                              child: Icon(Icons.send,
+                                  color:
+                                      isDarkMode ? Colors.black : Colors.white),
+                            )
+                          ],
+                        ),
+                        if (_showEmoji)
+                          SizedBox(
+                            height: 300,
+                            child: EmojiPicker(
+                              textEditingController: messageTextController,
+                              onEmojiSelected: (category, emoji) {
+                                messageTextController.text += emoji.emoji;
+                              },
+                              config: Config(
+                                height: 300,
+                                emojiViewConfig: EmojiViewConfig(
+                                  columns: 8,
+                                  emojiSizeMax: 40.0, // Bigger emojis like WhatsApp
+                                  backgroundColor: isDarkMode
+                                      ? const Color(0xFF202020) // Dark background
+                                      : Colors.white, // Light background
+                                ),
+                                searchViewConfig: SearchViewConfig(),
+                                bottomActionBarConfig: BottomActionBarConfig(
+                                  enabled: true,
+                                  backgroundColor: isDarkMode
+                                      ? const Color(0xFF292929) // Dark bar in dark mode
+                                      : Colors.white, // White bottom bar in light mode
+                                  buttonColor: isDarkMode
+                                      ? Colors.white.withOpacity(0.7)
+                                      : Colors.black.withOpacity(0.6), // Faded icons like WhatsApp
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
-                ),
               ],
             );
           },
@@ -277,15 +358,13 @@ class MessageBubble extends StatelessWidget {
           ),
         ),
         child: Column(
-          crossAxisAlignment:isMe?
-          CrossAxisAlignment.end:CrossAxisAlignment.start,
+          crossAxisAlignment:
+              isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
             Text(
               Message.content,
               style: TextStyle(
-                color: isDarkMode
-                    ?  Colors.white
-                    :   Colors.black,
+                color: isDarkMode ? Colors.white : Colors.black,
                 fontSize: 16,
               ),
             ),
@@ -297,14 +376,14 @@ class MessageBubble extends StatelessWidget {
                   style: TextStyle(
                       color: Colors.blueGrey, fontSize: mq.width * 0.02),
                 ),
-                 SizedBox(width: mq.width*0.02),
+                SizedBox(width: mq.width * 0.02),
                 if (isMe)
                   Icon(
                     Icons.done_all,
-                    size: mq.width*0.04,
+                    size: mq.width * 0.04,
                     color: Message.status == MessageStatus.read
                         ? Colors.blue
-                        : (isDarkMode?Colors.grey:Colors.white),
+                        : (isDarkMode ? Colors.grey : Colors.white),
                   )
               ],
             )

@@ -48,13 +48,13 @@ class UserModel{
       blockedUsers: List<String>.from(data["blockedUsers"]),
     );
   }
-Map<String, dynamic> toMap() {
-  return {
-    'username': username,
-    'email': email,
-    'phoneNumber': phoneNumber,
-    'createdAt': createdAt,
-    'blockedUsers': blockedUsers,
-  };
-}
+  Map<String, dynamic> toMap() {
+    return {
+      'username': username,
+      'email': email,
+      'phoneNumber': phoneNumber,
+      'createdAt': createdAt,
+      'blockedUsers': blockedUsers,
+    };
+  }
 }

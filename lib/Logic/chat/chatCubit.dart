@@ -11,7 +11,7 @@ class ChatCubit extends Cubit<ChatState>{
   final ChatRepository _chatRepository;
   final String currentUserId;
   bool _isInChat = false;
- StreamSubscription? _chatMessageSubscription;
+  StreamSubscription? _chatMessageSubscription;
   StreamSubscription? _blockStatusSubscription;
   StreamSubscription? _amIBlockStatusSubscription;
   ChatCubit({
@@ -31,10 +31,8 @@ class ChatCubit extends Cubit<ChatState>{
         receiverId: receiverId,
         status: ChatStatus.loaded,
       ));
-
       _getUserMessge(chatRoom.id);
       BlocOtherUser(receiverId);
-
     } catch (e) {
       emit(state.copyWith(
           status: ChatStatus.error, error: "Failed to create chat room $e"));
@@ -61,6 +59,41 @@ class ChatCubit extends Cubit<ChatState>{
       _markMessagesAsRead(state.chatRoomId!);
     }
   }
+  Future<void> loadMoreMessages() async {
+    if (state.status != ChatStatus.loaded ||
+        state.messages.isEmpty ||
+        !state.hasMoreMessages ||
+        state.isLoadingMore) return;
+
+    try {
+      emit(state.copyWith(isLoadingMore: true));
+
+      final lastMessage = state.messages.last;
+      final lastDoc = await _chatRepository
+          .getChatRoomMessages(state.chatRoomId!)
+          .doc(lastMessage.id)
+          .get();
+
+      final moreMessages = await _chatRepository
+          .getMoreMessages(state.chatRoomId!, lastDocument: lastDoc);
+
+      if (moreMessages.isEmpty) {
+        emit(state.copyWith(hasMoreMessages: false, isLoadingMore: false));
+        return;
+      }
+
+      emit(
+        state.copyWith(
+            messages: [...state.messages, ...moreMessages],
+            hasMoreMessages: moreMessages.length >= 20,
+            isLoadingMore: false),
+      );
+    } catch (e) {
+      emit(state.copyWith(
+          error: "Failed to laod more messages", isLoadingMore: false));
+    }
+  }
+
   void _getUserMessge(String chatRoomId) {
     _chatMessageSubscription?.cancel();
     _chatMessageSubscription =

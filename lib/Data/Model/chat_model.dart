@@ -17,7 +17,7 @@ class ChatRoomModel {
         this.lastMessageTime,
         Map<String, Timestamp>? lastReadTime,
         Map<String, String>? participantsName,
-       })
+      })
       : lastReadTime = lastReadTime ?? {},
         participantsName = participantsName ?? {};
 

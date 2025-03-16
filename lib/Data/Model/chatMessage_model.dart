@@ -74,7 +74,6 @@ class ChatMessage {
       readBy: map['readBy'] != null ? (map['readBy'] as String).split(',') : [],
     );
   }
-  //convert model to sqlfLiteDatasasdsadsa
   Map<String, dynamic> toSQLiteMap() {
     return {
       "id": id,

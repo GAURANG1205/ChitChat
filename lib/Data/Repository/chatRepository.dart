@@ -28,11 +28,11 @@ class ChatRepository extends RepoTemplate {
     }
 
     final currentUserData =
-        (await firestore.collection("users").doc(currentUserId).get()).data()
-            as Map<String, dynamic>;
+    (await firestore.collection("users").doc(currentUserId).get()).data()
+    as Map<String, dynamic>;
     final otherUserData =
-        (await firestore.collection("users").doc(otherUserId).get()).data()
-            as Map<String, dynamic>;
+    (await firestore.collection("users").doc(otherUserId).get()).data()
+    as Map<String, dynamic>;
     final participantsName = {
       currentUserId: currentUserData['username']?.toString() ?? "",
       otherUserId: otherUserData['username']?.toString() ?? "",
@@ -53,10 +53,10 @@ class ChatRepository extends RepoTemplate {
 
   Future<void> sendMessage(
       {required String chatRoomId,
-      required String senderId,
-      required String receiverId,
-      required String content,
-      MessageType type = MessageType.text}) async {
+        required String senderId,
+        required String receiverId,
+        required String content,
+        MessageType type = MessageType.text}) async {
     final batch = firestore.batch();
     final messageRef = getChatRoomMessages(chatRoomId);
     final messageDoc = messageRef.doc();
@@ -78,7 +78,6 @@ class ChatRepository extends RepoTemplate {
     });
     await batch.commit();
   }
-
   Stream<List<ChatMessage>> getMessages(String chatRoomId,
       {DocumentSnapshot? lastDocument}) {
     var query = getChatRoomMessages(chatRoomId)
@@ -92,12 +91,14 @@ class ChatRepository extends RepoTemplate {
         snapshot.docs.map((doc) => ChatMessage.fromFirestore(doc)).toList());
   }
 
+
   Future<List<ChatMessage>> getMoreMessages(String chatRoomId,
       {required DocumentSnapshot lastDocument}) async {
     final query = getChatRoomMessages(chatRoomId)
         .orderBy('timestamp', descending: true)
         .startAfterDocument(lastDocument)
         .limit(20);
+    print("comingg");
     final snapshot = await query.get();
     return snapshot.docs.map((doc) => ChatMessage.fromFirestore(doc)).toList();
   }
@@ -108,8 +109,8 @@ class ChatRepository extends RepoTemplate {
         .orderBy('lastMessageTime', descending: true)
         .snapshots()
         .map((snapshot) => snapshot.docs
-            .map((doc) => ChatRoomModel.fromFirestore(doc))
-            .toList());
+        .map((doc) => ChatRoomModel.fromFirestore(doc))
+        .toList());
   }
 
   Stream<int> getUnReadCount(String chatRoomId, String userId) {
@@ -124,7 +125,6 @@ class ChatRepository extends RepoTemplate {
   Future<void> markMessagesAsRead(String chatRoomId, String userId) async {
     try {
       final batch = firestore.batch();
-
       final unreadMessages = await getChatRoomMessages(chatRoomId)
           .where(
         "receiverId",
@@ -144,6 +144,7 @@ class ChatRepository extends RepoTemplate {
       }
     } catch (e) {}
   }
+
   Future<DocumentSnapshot> getChatRoomDocument(String chatRoomId) {
     return _chatRooms.doc(chatRoomId).get();
   }
