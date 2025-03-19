@@ -40,7 +40,6 @@ class Contactlocal {
       }
     });
   }
-
   Future<List<Map<String, dynamic>>> getCachedContacts() async {
     final db = await database;
     return await db.query('contacts');

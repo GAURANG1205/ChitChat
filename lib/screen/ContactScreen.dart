@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:chitchat/Data/Repository/ContactRepository.dart';
 import 'package:chitchat/Data/Repository/template/service_locator.dart';
 import 'package:flutter/material.dart';
@@ -19,16 +21,17 @@ class contactScreen extends StatefulWidget {
 class contactScreenState extends State<contactScreen> {
   final TextEditingController searchController = TextEditingController();
   final ContactRepository _contactRepository = ContactRepository();
+  StreamSubscription? _contactSubscription;
   List<Map<String, dynamic>> _contacts = [];
   List<Map<String, dynamic>> _filteredContacts = [];
   bool _isLoading = true;
   String _errorMessage = '';
-
+  bool _isNavigating = false;
   @override
   void initState() {
     super.initState();
     _loadContacts();
-    _contactRepository.contactsStream.listen((updatedContacts) {
+    _contactSubscription =  _contactRepository.contactsStream.listen((updatedContacts) {
       setState(() {
         _contacts = updatedContacts;
         _filterContacts();
@@ -61,17 +64,29 @@ class contactScreenState extends State<contactScreen> {
 
   void _filterContacts() {
     final query = searchController.text.toLowerCase();
-    setState(() {
-      if (query.isEmpty) {
-        _filteredContacts = List.from(_contacts);
-      } else {
-        _filteredContacts = _contacts.where((contact) {
-          final name = contact["name"].toString().toLowerCase();
-          final phoneNumber = contact["phoneNumber"].toString().toLowerCase();
-          return name.contains(query) || phoneNumber.contains(query);
-        }).toList();
-      }
-    });
+    if (query.isEmpty) {
+      _filteredContacts = List.from(_contacts);
+    } else {
+      _filteredContacts = _contacts.where((contact) {
+        final name = contact["name"].toString().toLowerCase();
+        final phoneNumber = contact["phoneNumber"].toString().toLowerCase();
+        return name.contains(query) || phoneNumber.contains(query);
+      }).toList();
+    }
+    setState(() {});
+  }
+
+  void _onContactTap(Map<String, dynamic> contact) {
+    if (_isNavigating) return;
+
+    _isNavigating = true;
+    Get.off(
+          () => ChatMessageScreen(
+        receiverId: contact['id'],
+        receiverName: contact['name'],
+      ),
+      transition: Transition.rightToLeft,
+    )?.then((_) => _isNavigating = false);
   }
 
   @override
@@ -79,6 +94,7 @@ class contactScreenState extends State<contactScreen> {
     searchController.removeListener(_filterContacts);
     searchController.dispose();
     _contactRepository.dispose();
+    _contactSubscription?.cancel();
     super.dispose();
   }
 
@@ -223,8 +239,9 @@ class contactScreenState extends State<contactScreen> {
                   contentPadding: EdgeInsets.symmetric(
                       horizontal: 16, vertical: 4),
                   leading: CircleAvatar(
-                    backgroundImage:
-                    AssetImage("assets/icon/Unknown.jpg"),
+                    backgroundImage: contact["photo"] != null
+                        ? MemoryImage(contact["photo"])
+                        : AssetImage("assets/icon/Unknown.jpg") as ImageProvider,
                   ),
                   title: Text(
                     contact["name"],
@@ -234,14 +251,7 @@ class contactScreenState extends State<contactScreen> {
                     contact["phoneNumber"] ?? "",
                     style: TextStyle(fontSize: 12),
                   ),
-                  onTap: () {
-                    Get.off(
-                            () => ChatMessageScreen(
-                          receiverId: contact['id'],
-                          receiverName: contact['name'],
-                        ),
-                        transition: Transition.rightToLeft);
-                  },
+                    onTap: () => _onContactTap(contact),
                 );
               },
             ),

@@ -46,17 +46,20 @@ class ChatListTile extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
-        subtitle: Row(
+        subtitle: chat.lastMessage != null && chat.lastMessage!.isNotEmpty
+            ? Row(
           children: [
             Expanded(
-                child: Text(
-              chat.lastMessage ?? "",
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(color: Colors.grey[600]),
-            )),
+              child: Text(
+                chat.lastMessage!,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: Colors.grey[600]),
+              ),
+            ),
           ],
-        ),
+        )
+            : const SizedBox(),
         trailing: StreamBuilder<int>(
           stream:
               getit<ChatRepository>().getUnReadCount(chat.id, currentUserId),

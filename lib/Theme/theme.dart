@@ -103,7 +103,7 @@ ThemeData darkThemeData(BuildContext context) {
             color: states.contains(WidgetState.selected)
                 ? kPrimaryColor
                 : kContentColorLightTheme
-                    .withOpacity(0.32), // Unselected icon color
+                    .withOpacity(0.32),
           );
         })),
     elevatedButtonTheme: ElevatedButtonThemeData(

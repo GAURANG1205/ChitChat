@@ -11,6 +11,7 @@ import '../Model/user_model.dart';
 class ContactRepository extends RepoTemplate {
   String get currentUserId => auth.currentUser?.uid ?? '';
   final Contactlocal _localDb = Contactlocal();
+  StreamSubscription? _firestoreSubscription;
 
   final StreamController<List<Map<String, dynamic>>> _contactsStreamController =
   StreamController<List<Map<String, dynamic>>>.broadcast();
@@ -29,7 +30,7 @@ class ContactRepository extends RepoTemplate {
   }
 
   void listenForNewRegisteredUsers() {
-    firestore.collection("users").snapshots().listen((snapshot) async {
+    _firestoreSubscription=firestore.collection("users").snapshots().listen((snapshot) async {
       await refreshContacts();
     });
   }
@@ -37,23 +38,16 @@ class ContactRepository extends RepoTemplate {
   Future<void> refreshContacts() async {
     try {
       final cachedContacts = await _localDb.getCachedContacts();
-      final cachedPhoneNumbers = cachedContacts.map((contact) => contact['phoneNumber'] as String).toSet();
-
-      final contacts = await FlutterContacts.getContacts(
-        withProperties: true,
-        withPhoto: true,
-      );
-      final List<Map<String, dynamic>> phoneNumbers =
-      await compute(_normalizeContacts, contacts);
-
+      final cachedPhoneNumbers = cachedContacts.map((c) => c['phoneNumber'] as String).toSet();
+      final contacts = await FlutterContacts.getContacts(withProperties: true, withPhoto: true);
+      final phoneNumbers = await compute(_normalizeContacts, contacts);
+      if (phoneNumbers.every((contact) => cachedPhoneNumbers.contains(contact['phoneNumber']))) {
+        return;
+      }
       final usersSnapshot = await firestore.collection("users").get();
-      final registeredUsers = usersSnapshot.docs
-          .map((doc) => UserModel.fromFirestore(doc))
-          .toList();
-
-      final Map<String, UserModel> registeredUsersMap = {
-        for (var user in registeredUsers)
-          normalizePhoneNumber(user.phoneNumber): user
+      final registeredUsers = usersSnapshot.docs.map((doc) => UserModel.fromFirestore(doc)).toList();
+      final registeredUsersMap = {
+        for (var user in registeredUsers) normalizePhoneNumber(user.phoneNumber): user
       };
 
       final matchedContacts = <Map<String, dynamic>>[];
@@ -63,25 +57,25 @@ class ContactRepository extends RepoTemplate {
         String phoneNumber = contact["phoneNumber"];
         if (registeredUsersMap.containsKey(phoneNumber)) {
           final registeredUser = registeredUsersMap[phoneNumber];
-          if (registeredUser!.uid == currentUserId) {
-            continue;
-          }
+          if (registeredUser!.uid == currentUserId) continue;
+
           final contactData = {
             'id': registeredUser.uid,
             'name': contact['name'],
             'phoneNumber': phoneNumber,
             'photo': contact['photo'],
           };
+
           matchedContacts.add(contactData);
           if (!cachedPhoneNumbers.contains(phoneNumber)) {
             newlyMatchedContacts.add(contactData);
           }
         }
       }
+
       if (matchedContacts.isNotEmpty) {
         await _localDb.saveContacts(matchedContacts);
         _contactsStreamController.add(matchedContacts);
-
         if (newlyMatchedContacts.isNotEmpty) {
           log('New registered contacts found: ${newlyMatchedContacts.length}');
         }
@@ -109,27 +103,27 @@ class ContactRepository extends RepoTemplate {
 
   List<Map<String, dynamic>> _normalizeContacts(List<Contact> contacts) {
     Set<String> uniqueNumbers = {};
+    List<Map<String, dynamic>> normalizedContacts = [];
 
-    return contacts
-        .where((contact) => contact.phones.isNotEmpty)
-        .map((contact) {
-      String normalizedPhone = normalizePhoneNumber(contact.phones.first.number);
-      if (uniqueNumbers.contains(normalizedPhone)) {
-        return null;
+    for (var contact in contacts) {
+      for (var phone in contact.phones) {
+        String normalizedPhone = normalizePhoneNumber(phone.number);
+        if (normalizedPhone.isEmpty || uniqueNumbers.contains(normalizedPhone)) {
+          continue;
+        }
+        uniqueNumbers.add(normalizedPhone);
+        normalizedContacts.add({
+          'name': contact.displayName,
+          'phoneNumber': normalizedPhone,
+          'photo': contact.photo,
+        });
       }
-      uniqueNumbers.add(normalizedPhone);
-      return {
-        'name': contact.displayName,
-        'phoneNumber': normalizedPhone,
-        'photo': contact.photo,
-      };
-    })
-        .where((contact) => contact != null)
-        .cast<Map<String, dynamic>>()
-        .toList();
+    }
+    return normalizedContacts;
   }
 
   void dispose() {
     _contactsStreamController.close();
+    _firestoreSubscription?.cancel();
   }
 }

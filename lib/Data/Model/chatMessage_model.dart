@@ -14,6 +14,9 @@ class ChatMessage {
   final MessageStatus status;
   final Timestamp timestamp;
   final List<String> readBy;
+  final Timestamp? editedAt;
+  final ChatMessage? repliedToMessage;
+  final List<String> deletedFor;
 
   ChatMessage({
     required this.id,
@@ -25,56 +28,53 @@ class ChatMessage {
     this.status = MessageStatus.sent,
     required this.timestamp,
     required this.readBy,
+    this.editedAt,
+    this.repliedToMessage,
+    required this.deletedFor,
   });
 
   factory ChatMessage.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
+
     return ChatMessage(
       id: doc.id,
       chatRoomId: data['chatRoomId'] as String,
       senderId: data['senderId'] as String,
       receiverId: data['receiverId'] as String,
       content: data['content'] as String,
-      type: MessageType.values.firstWhere((e) => e.toString() == data['type'],
-          orElse: () => MessageType.text),
+      type: MessageType.values.firstWhere(
+            (e) => e.toString() == data['type'],
+        orElse: () => MessageType.text,
+      ),
       status: MessageStatus.values.firstWhere(
-              (e) => e.toString() == data['status'],
-          orElse: () => MessageStatus.sent),
+            (e) => e.toString() == data['status'],
+        orElse: () => MessageStatus.sent,
+      ),
       timestamp: data['timestamp'] as Timestamp,
       readBy: List<String>.from(data['readBy'] ?? []),
+      editedAt: data['editedAt'] != null ? data['editedAt'] as Timestamp : null,
+      repliedToMessage: data['repliedToMessage'] != null
+          ? ChatMessage(
+        id: data['repliedToMessage']['id'] ?? '',
+        senderId: data['repliedToMessage']['senderId'] ?? '',
+        receiverId: '',
+        chatRoomId: '',
+        content: data['repliedToMessage']['content'] ?? '',
+        timestamp: (data['repliedToMessage']['timestamp'] as Timestamp?) ??
+            Timestamp.now(),
+        type: MessageType.text,
+        status: MessageStatus.sent,
+        readBy: [],
+        editedAt: null,
+        deletedFor: [],
+        repliedToMessage: null,
+      )
+          : null,
+      deletedFor: List<String>.from(data['deletedFor'] ?? []),
     );
   }
 
   Map<String, dynamic> toMap() {
-    return {
-      "chatRoomId": chatRoomId,
-      "senderId": senderId,
-      "receiverId": receiverId,
-      "content": content,
-      "type": type.toString(),
-      "status": status.toString(),
-      "timestamp": timestamp,
-      "readBy": readBy,
-    };
-  }
-  factory ChatMessage.fromMap(Map<String, dynamic> map) {
-    return ChatMessage(
-      id: map['id'],
-      chatRoomId: map['chatRoomId'],
-      senderId: map['senderId'],
-      receiverId: map['receiverId'],
-      content: map['content'],
-      type: MessageType.values.firstWhere(
-              (e) => e.toString() == map['type'],
-          orElse: () => MessageType.text),
-      status: MessageStatus.values.firstWhere(
-              (e) => e.toString() == map['status'],
-          orElse: () => MessageStatus.sent),
-      timestamp: Timestamp.fromMillisecondsSinceEpoch(map['timestamp']),
-      readBy: map['readBy'] != null ? (map['readBy'] as String).split(',') : [],
-    );
-  }
-  Map<String, dynamic> toSQLiteMap() {
     return {
       "id": id,
       "chatRoomId": chatRoomId,
@@ -83,9 +83,42 @@ class ChatMessage {
       "content": content,
       "type": type.toString(),
       "status": status.toString(),
-      "timestamp": timestamp.millisecondsSinceEpoch,
-      "readBy": readBy.join(','),
+      "timestamp": timestamp,
+      "readBy": readBy,
+      "editedAt": editedAt,
+      "repliedToMessage": repliedToMessage != null
+          ? {
+        'id': repliedToMessage!.id,
+        'senderId': repliedToMessage!.senderId,
+        'content': repliedToMessage!.content,
+        'timestamp': repliedToMessage!.timestamp,
+      }
+          : null,
+      "deletedFor": deletedFor,
     };
+  }
+  factory ChatMessage.fromMap(Map<String, dynamic> map) {
+    return ChatMessage(
+        id: map['id'],
+        chatRoomId: map['chatRoomId'],
+        senderId: map['senderId'],
+        receiverId: map['receiverId'],
+        content: map['content'],
+        type: MessageType.values.firstWhere((e) => e.toString() == map['type'],
+            orElse: () => MessageType.text),
+        status: MessageStatus.values.firstWhere(
+            (e) => e.toString() == map['status'],
+            orElse: () => MessageStatus.sent),
+        timestamp: Timestamp.fromMillisecondsSinceEpoch(map['timestamp']),
+        readBy: map['readBy'] != null ? List<String>.from(map['readBy']) : [],
+        editedAt: map['editedAt'] != null
+            ? Timestamp.fromMillisecondsSinceEpoch(map['editedAt'])
+            : null,
+        repliedToMessage: map['repliedToMessage'] != null
+            ? ChatMessage.fromMap(
+                Map<String, dynamic>.from(map['repliedToMessage']))
+            : null,
+        deletedFor: List<String>.from(map['deletedFor'] ?? []));
   }
 
   ChatMessage copyWith({
@@ -98,6 +131,9 @@ class ChatMessage {
     MessageStatus? status,
     Timestamp? timestamp,
     List<String>? readBy,
+    Timestamp? editedAt,
+    ChatMessage? repliedToMessage,
+    List<String>? deletedFor,
   }) {
     return ChatMessage(
       id: id ?? this.id,
@@ -109,6 +145,9 @@ class ChatMessage {
       status: status ?? this.status,
       timestamp: timestamp ?? this.timestamp,
       readBy: readBy ?? this.readBy,
+      editedAt: editedAt ?? this.editedAt,
+      repliedToMessage: repliedToMessage ?? this.repliedToMessage,
+      deletedFor: deletedFor ?? this.deletedFor,
     );
   }
 }
