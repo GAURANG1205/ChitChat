@@ -15,11 +15,13 @@ import '../Data/Repository/template/service_locator.dart';
 class ChatMessageScreen extends StatefulWidget {
   final String receiverId;
   final String receiverName;
+  final String? photoUrl;
 
   const ChatMessageScreen({
     super.key,
     required this.receiverId,
     required this.receiverName,
+    required this.photoUrl,
   });
 
   @override
@@ -245,8 +247,10 @@ class _ChatMessageScreenState extends State<ChatMessageScreen> {
                     Flexible(
                       flex: 1,
                       child: CircleAvatar(
-                        radius: mq.width * 0.045,
-                        backgroundImage: AssetImage("assets/icon/Unknown.jpg"),
+                        radius: mq.width*0.04,
+                        backgroundImage:  widget.photoUrl!.isNotEmpty
+                            ? NetworkImage(widget.photoUrl!)
+                            : const AssetImage("assets/icon/Unknown.jpg") as ImageProvider,
                       ),
                     ),
                     SizedBox(width: mq.width * 0.0158),

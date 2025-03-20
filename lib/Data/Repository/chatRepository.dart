@@ -114,8 +114,6 @@ class ChatRepository extends RepoTemplate {
     });
   }
 
-
-
   Future<List<ChatMessage>> getMoreMessages(String chatRoomId,
       {required DocumentSnapshot lastDocument}) async {
     final query = getChatRoomMessages(chatRoomId)
@@ -150,9 +148,9 @@ class ChatRepository extends RepoTemplate {
       final batch = firestore.batch();
       final unreadMessages = await getChatRoomMessages(chatRoomId)
           .where(
-            "receiverId",
-            isEqualTo: userId,
-          )
+        "receiverId",
+        isEqualTo: userId,
+      )
           .where('status', isEqualTo: MessageStatus.sent.toString())
           .get();
       print("found ${unreadMessages.docs.length} unread messages");
@@ -168,8 +166,23 @@ class ChatRepository extends RepoTemplate {
     } catch (e) {}
   }
 
-  Future<DocumentSnapshot> getChatRoomDocument(String chatRoomId) {
-    return _chatRooms.doc(chatRoomId).get();
+  Future<DocumentSnapshot?> getExistingChatRoom(String userId1, String userId2) async {
+    try {
+      QuerySnapshot chatRoomQuery = await FirebaseFirestore.instance
+          .collection('chatRooms')
+          .where('participants', arrayContains: userId1)
+          .get();
+      for (var doc in chatRoomQuery.docs) {
+        List participants = doc['participants'];
+        if (participants.contains(userId2)) {
+          return doc;
+        }
+      }
+      return null;
+    } catch (e) {
+      print("Error fetching existing chat room: $e");
+      return null;
+    }
   }
 
   Future<void> blockUser(String currentUserId, String blockedUserId) async {
@@ -196,6 +209,27 @@ class ChatRepository extends RepoTemplate {
       return userData.blockedUsers.contains(otherUserId);
     });
   }
+  Future<String?> getUserProfileImage(String userId) async {
+    try {
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
+      if (userDoc.exists) {
+        return userDoc.data()?['profileImage'] as String?;
+      }
+    } catch (e) {
+      print("Error fetching profile image: $e");
+    }
+    return null;
+  }
+
+  Stream<ChatRoomModel> getChatRoomStream(String chatRoomId) {
+    return _chatRooms.doc(chatRoomId).snapshots().map((doc) {
+      if (doc.exists) {
+        return ChatRoomModel.fromFirestore(doc);
+      } else {
+        throw Exception("Chat room not found");
+      }
+    });
+  }
 
   Stream<bool> amIBlocked(String currentUserId, String otherUserId) {
     return firestore
@@ -209,10 +243,33 @@ class ChatRepository extends RepoTemplate {
   }
   Future<void> deleteMessageForUser(String chatRoomId, String messageId, String userId) async {
     final messageRef = getChatRoomMessages(chatRoomId).doc(messageId);
-
+    final messageDoc = await messageRef.get();
+    if (!messageDoc.exists) return;
+    final messageData = ChatMessage.fromFirestore(messageDoc);
+    final chatRoomRef = _chatRooms.doc(chatRoomId);
     await messageRef.update({
       "deletedFor": FieldValue.arrayUnion([userId])
     });
+
+    final chatRoomDoc = await chatRoomRef.get();
+    if (chatRoomDoc.exists) {
+      final chatRoomData = ChatRoomModel.fromFirestore(chatRoomDoc);
+
+      if (chatRoomData.lastMessage == messageData.content) {
+        final querySnapshot = await getChatRoomMessages(chatRoomId)
+            .orderBy('timestamp', descending: true)
+            .where("deletedFor", arrayContains: userId, isEqualTo: false)
+            .limit(1)
+            .get();
+
+        if (querySnapshot.docs.isNotEmpty) {
+          final newLastMessage = ChatMessage.fromFirestore(querySnapshot.docs.first);
+          await chatRoomRef.update({"lastMessage": newLastMessage.content});
+        } else {
+          await chatRoomRef.update({"lastMessage": " "});
+        }
+      }
+    }
   }
 
 }

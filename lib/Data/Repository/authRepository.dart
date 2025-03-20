@@ -41,6 +41,7 @@ class AuthRepository extends RepoTemplate {
         username: username,
         email: email,
         phoneNumber: formattedPhoneNumber,
+        profileImage: "",
       );
       await saveUserData(user);
       return user;
@@ -96,7 +97,8 @@ class AuthRepository extends RepoTemplate {
           uid: user.uid,
           username: user.displayName ?? "New User",
           email: user.email ?? "Unknown",
-          phoneNumber: "",
+          phoneNumber: user.phoneNumber?? "",
+          profileImage:"",
         );
         await saveUserData(userModel);
       }
@@ -182,6 +184,20 @@ class AuthRepository extends RepoTemplate {
       throw FirebaseAuthException(
           code: 'update-phone-failed',
           message: 'Failed to update phone number');
+    }
+  }
+
+  Future<void> updateProfileImage(String uid, String imageUrl) async {
+    try {
+      await firestore.collection("users").doc(uid).update({
+        "profileImage": imageUrl,
+      });
+      log("Profile image updated successfully");
+    } catch (e) {
+      log("Error updating profile image: ${e.toString()}");
+      throw FirebaseAuthException(
+          code: 'update-profile-image-failed',
+          message: 'Failed to update profile image');
     }
   }
 

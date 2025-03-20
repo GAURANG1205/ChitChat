@@ -7,6 +7,7 @@ class UserModel{
   final String phoneNumber;
   final Timestamp createdAt;
   final List<String> blockedUsers;
+  final String profileImage;
 
   UserModel({
     required this.uid,
@@ -16,6 +17,7 @@ class UserModel{
     Timestamp? lastSeen,
     Timestamp? createdAt,
     this.blockedUsers = const [],
+    required this.profileImage,
   })  :createdAt = createdAt ?? Timestamp.now();
 
   UserModel copyWith({
@@ -26,6 +28,7 @@ class UserModel{
     Timestamp? lastSeen,
     Timestamp? createdAt,
     List<String>? blockedUsers,
+    String? profileImage
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -34,6 +37,7 @@ class UserModel{
       phoneNumber: phoneNumber ?? this.phoneNumber,
       createdAt: createdAt ?? this.createdAt,
       blockedUsers: blockedUsers ?? this.blockedUsers,
+      profileImage: profileImage ?? this.profileImage,
     );
   }
   factory UserModel.fromFirestore(DocumentSnapshot doc) {
@@ -46,6 +50,7 @@ class UserModel{
       lastSeen: data["lastSeen"] ?? Timestamp.now(),
       createdAt: data["createdAt"] ?? Timestamp.now(),
       blockedUsers: List<String>.from(data["blockedUsers"]),
+      profileImage: data["profileImage"] ?? "",
     );
   }
   Map<String, dynamic> toMap() {
@@ -55,6 +60,7 @@ class UserModel{
       'phoneNumber': phoneNumber,
       'createdAt': createdAt,
       'blockedUsers': blockedUsers,
+      'profileImage': profileImage,
     };
   }
 }

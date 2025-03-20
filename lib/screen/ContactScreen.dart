@@ -27,15 +27,14 @@ class contactScreenState extends State<contactScreen> {
   bool _isLoading = true;
   String _errorMessage = '';
   bool _isNavigating = false;
+
   @override
   void initState() {
     super.initState();
     _loadContacts();
-    _contactSubscription =  _contactRepository.contactsStream.listen((updatedContacts) {
-      setState(() {
-        _contacts = updatedContacts;
-        _filterContacts();
-      });
+    _contactSubscription = _contactRepository.contactsStream.listen((updatedContacts) {
+      _contacts = updatedContacts;
+      _filterContacts();
     });
     searchController.addListener(_filterContacts);
     _contactRepository.listenForNewRegisteredUsers();
@@ -76,14 +75,16 @@ class contactScreenState extends State<contactScreen> {
     setState(() {});
   }
 
-  void _onContactTap(Map<String, dynamic> contact) {
+  void _onContactTap(Map<String, dynamic> contact) async {
     if (_isNavigating) return;
-
+    String? profileImageUrl =
+        await _contactRepository.getUserProfileImage(contact['id']);
     _isNavigating = true;
-    Get.off(
-          () => ChatMessageScreen(
-        receiverId: contact['id'],
-        receiverName: contact['name'],
+    Get.to(
+      () => ChatMessageScreen(
+        receiverId: contact['id']??'',
+        receiverName: contact['name']??'',
+        photoUrl: profileImageUrl??'',
       ),
       transition: Transition.rightToLeft,
     )?.then((_) => _isNavigating = false);
@@ -110,10 +111,10 @@ class contactScreenState extends State<contactScreen> {
         title: Text(
           "Select Contact",
           style: Theme.of(context).textTheme.titleLarge!.copyWith(
-            color: isDarkMode ? kContentColorLightTheme : kPrimaryColor,
-            fontSize: mq.width * 0.0485,
-            fontWeight: FontWeight.bold,
-          ),
+                color: isDarkMode ? kContentColorLightTheme : kPrimaryColor,
+                fontSize: mq.width * 0.0485,
+                fontWeight: FontWeight.bold,
+              ),
         ),
         actions: [
           IconButton(
@@ -142,11 +143,11 @@ class contactScreenState extends State<contactScreen> {
                     : Color.fromRGBO(228, 228, 228, 1),
                 suffixIcon: searchController.text.isNotEmpty
                     ? IconButton(
-                  onPressed: () {
-                    searchController.clear();
-                  },
-                  icon: Icon(Icons.close),
-                )
+                        onPressed: () {
+                          searchController.clear();
+                        },
+                        icon: Icon(Icons.close),
+                      )
                     : Icon(Icons.search),
                 contentPadding: EdgeInsets.only(left: 20, top: 10, bottom: 10),
                 border: OutlineInputBorder(
@@ -192,69 +193,88 @@ class contactScreenState extends State<contactScreen> {
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : _errorMessage.isNotEmpty
-                ? Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text("Error: $_errorMessage"),
-                  ElevatedButton(
-                    onPressed: _loadContacts,
-                    child: Text("Retry"),
-                  ),
-                ],
-              ),
-            )
-                : _filteredContacts.isEmpty
-                ? Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.person_search,
-                    size: 48,
-                    color: isDarkMode
-                        ? Colors.white54
-                        : Colors.black38,
-                  ),
-                  SizedBox(height: 16),
-                  Text(
-                    searchController.text.isEmpty
-                        ? "No contacts found on ChitChat"
-                        : "No matching contacts found",
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: isDarkMode
-                          ? Colors.white70
-                          : Colors.black54,
-                    ),
-                  ),
-                ],
-              ),
-            )
-                : ListView.builder(
-              itemCount: _filteredContacts.length,
-              itemBuilder: (context, index) {
-                final contact = _filteredContacts[index];
-                return ListTile(
-                  contentPadding: EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 4),
-                  leading: CircleAvatar(
-                    backgroundImage: contact["photo"] != null
-                        ? MemoryImage(contact["photo"])
-                        : AssetImage("assets/icon/Unknown.jpg") as ImageProvider,
-                  ),
-                  title: Text(
-                    contact["name"],
-                    style: TextStyle(fontSize: 16),
-                  ),
-                  subtitle: Text(
-                    contact["phoneNumber"] ?? "",
-                    style: TextStyle(fontSize: 12),
-                  ),
-                    onTap: () => _onContactTap(contact),
-                );
-              },
-            ),
+                    ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text("Error: $_errorMessage"),
+                            ElevatedButton(
+                              onPressed: _loadContacts,
+                              child: Text("Retry"),
+                            ),
+                          ],
+                        ),
+                      )
+                    : _filteredContacts.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.person_search,
+                                  size: 48,
+                                  color: isDarkMode
+                                      ? Colors.white54
+                                      : Colors.black38,
+                                ),
+                                SizedBox(height: 16),
+                                Text(
+                                  searchController.text.isEmpty
+                                      ? "No contacts found on ChitChat"
+                                      : "No matching contacts found",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: isDarkMode
+                                        ? Colors.white70
+                                        : Colors.black54,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: _filteredContacts.length,
+                            itemBuilder: (context, index) {
+                              final contact = _filteredContacts[index];
+                              return ListTile(
+                                contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 4),
+                                leading: FutureBuilder<String?>(
+                                  future: _contactRepository
+                                      .getUserProfileImage(contact["id"]),
+                                  builder: (context, snapshot) {
+                                    if (snapshot.connectionState ==
+                                        ConnectionState.waiting) {
+                                      return CircleAvatar(
+                                        backgroundColor: Colors.grey.shade300,
+                                        child: Icon(Icons.person,
+                                            color: Colors.white),
+                                      );
+                                    }
+                                    final profileImageUrl = snapshot.data;
+                                    return CircleAvatar(
+                                      backgroundImage:
+                                          profileImageUrl != null &&
+                                                  profileImageUrl.isNotEmpty
+                                              ? NetworkImage(profileImageUrl)
+                                              : AssetImage(
+                                                      "assets/icon/Unknown.jpg")
+                                                  as ImageProvider,
+                                    );
+                                  },
+                                ),
+                                title: Text(
+                                  contact["name"],
+                                  style: TextStyle(fontSize: 16),
+                                ),
+                                subtitle: Text(
+                                  contact["phoneNumber"] ?? "",
+                                  style: TextStyle(fontSize: 12),
+                                ),
+                                onTap: () => _onContactTap(contact),
+                              );
+                            },
+                          ),
           )
         ],
       ),

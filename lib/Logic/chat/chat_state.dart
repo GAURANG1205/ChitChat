@@ -21,6 +21,7 @@ class ChatState extends Equatable {
   final bool isUserBlocked;
   final bool amIBlocked;
   final ChatMessage? replyMessage;
+  final String? lastMessage;
   const ChatState({
     this.status = ChatStatus.inital,
     this.error,
@@ -32,7 +33,8 @@ class ChatState extends Equatable {
     this.isLoadingMore = false,
     this.isUserBlocked = false,
     this.amIBlocked = false,
-    this.replyMessage
+    this.replyMessage,
+    this.lastMessage
   });
 
   ChatState copyWith({
@@ -48,6 +50,7 @@ class ChatState extends Equatable {
     bool? amIBlocked,
     ChatMessage? replyMessage,
     bool clearReplyMessage = false,
+    String? lastMessage
   }) {
     return ChatState(
       status: status ?? this.status,
@@ -61,6 +64,7 @@ class ChatState extends Equatable {
       isUserBlocked: isUserBlocked ?? this.isUserBlocked,
       amIBlocked: amIBlocked ?? this.amIBlocked,
       replyMessage: clearReplyMessage ? null : replyMessage ?? this.replyMessage,
+      lastMessage: lastMessage??this.lastMessage
     );
   }
 

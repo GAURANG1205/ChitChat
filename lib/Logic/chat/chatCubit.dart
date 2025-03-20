@@ -8,6 +8,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/animation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../Data/Model/chat_model.dart';
 import '../../Data/Repository/chatRepository.dart';
 
 class ChatCubit extends Cubit<ChatState> {
@@ -26,42 +27,61 @@ class ChatCubit extends Cubit<ChatState> {
 
   void enterChat(String receiverId) async {
     _isInChat = true;
-    emit(state.copyWith(status: ChatStatus.loading));
+    emit(state.copyWith(
+      receiverId: receiverId,
+      status: ChatStatus.loading,
+    ));
     try {
-      final chatRoom =
-          await _chatRepository.getOrCreateChatRoom(currentUserId, receiverId);
-      emit(state.copyWith(
-        chatRoomId: chatRoom.id,
-        receiverId: receiverId,
-        status: ChatStatus.loaded,
-      ));
-      _getUserMessge(chatRoom.id, currentUserId);
-      BlocOtherUser(receiverId);
+      final chatRoomDoc = await _chatRepository.getExistingChatRoom(currentUserId, receiverId);
+      if (chatRoomDoc != null && chatRoomDoc.exists) {
+        final chatRoom = ChatRoomModel.fromFirestore(chatRoomDoc);
+        emit(state.copyWith(
+          chatRoomId: chatRoom.id,
+          status: ChatStatus.loaded,
+        ));
+        _getUserMessge(chatRoom.id, currentUserId);
+        BlocOtherUser(receiverId);
+      } else {
+        emit(state.copyWith(status: ChatStatus.loaded));
+      }
     } catch (e) {
       emit(state.copyWith(
-          status: ChatStatus.error, error: "Failed to create chat room $e"));
+        status: ChatStatus.error,
+        error: "Failed to check chat room: $e",
+      ));
     }
   }
 
+
   Future<void> sendMessage({required String content, required String receiverId}) async {
-    if (state.chatRoomId == null) return;
+    String? chatRoomId = state.chatRoomId;
+
+    if (chatRoomId == null) {
+      try {
+        final chatRoom = await _chatRepository.getOrCreateChatRoom(currentUserId, receiverId);
+        chatRoomId = chatRoom.id;
+        emit(state.copyWith(chatRoomId: chatRoomId));
+        _getUserMessge(chatRoom.id, currentUserId);
+      } catch (e) {
+        emit(state.copyWith(error: "Failed to create chat room: $e"));
+        return;
+      }
+    }
+
     try {
       await _chatRepository.sendMessage(
-        chatRoomId: state.chatRoomId!,
+        chatRoomId: chatRoomId,
         senderId: currentUserId,
         receiverId: receiverId,
         content: content,
         repliedToMessage: state.replyMessage,
       );
-      print("Message sent, clearing reply state");
       emit(state.copyWith(clearReplyMessage: true));
-      print("State after sending: ${state.replyMessage}");
     } catch (e) {
-      log(e.toString());
+      log("Failed to send message: $e");
       emit(state.copyWith(error: "Failed to send message"));
     }
   }
-
 
   void onChatScreenOpened() {
     if (state.chatRoomId != null) {
@@ -74,7 +94,7 @@ class ChatCubit extends Cubit<ChatState> {
         state.messages.isEmpty ||
         !state.hasMoreMessages ||
         state.isLoadingMore) return;
-
+    if (state.chatRoomId == null) return;
     try {
       emit(state.copyWith(isLoadingMore: true));
 
@@ -125,7 +145,6 @@ class ChatCubit extends Cubit<ChatState> {
       );
     });
   }
-
   Future<void> _markMessagesAsRead(String chatRoomId) async {
     try {
       await _chatRepository.markMessagesAsRead(chatRoomId, currentUserId);
@@ -159,20 +178,14 @@ class ChatCubit extends Cubit<ChatState> {
     _blockStatusSubscription = _chatRepository
         .isUserBlocked(currentUserId, otherUserId)
         .listen((isBlocked) {
-      emit(
-        state.copyWith(isUserBlocked: isBlocked),
-      );
+      emit(state.copyWith(isUserBlocked: isBlocked));
 
       _amIBlockStatusSubscription?.cancel();
-      _blockStatusSubscription = _chatRepository
+      _amIBlockStatusSubscription = _chatRepository
           .amIBlocked(currentUserId, otherUserId)
           .listen((isBlocked) {
-        emit(
-          state.copyWith(amIBlocked: isBlocked),
-        );
+        emit(state.copyWith(amIBlocked: isBlocked));
       });
-    }, onError: (error) {
-      print("error getting online status");
     });
   }
 
@@ -199,7 +212,6 @@ class ChatCubit extends Cubit<ChatState> {
       print("Error updating message: $e");
     }
   }
-
   Future<void> deleteMessage(String messageId, bool forEveryone) async {
     try {
       DocumentReference messageRef = FirebaseFirestore.instance
@@ -207,15 +219,45 @@ class ChatCubit extends Cubit<ChatState> {
           .doc(state.chatRoomId)
           .collection('messages')
           .doc(messageId);
+
       if (forEveryone) {
         await messageRef.delete();
+        QuerySnapshot messagesSnapshot = await FirebaseFirestore.instance
+            .collection('chatRooms')
+            .doc(state.chatRoomId)
+            .collection('messages')
+            .orderBy('timestamp', descending: true)
+            .limit(1)
+            .get();
+
+        String newLastMessage = messagesSnapshot.docs.isNotEmpty
+            ? messagesSnapshot.docs.first['content']
+            : "";
+
+        await FirebaseFirestore.instance
+            .collection('chatRooms')
+            .doc(state.chatRoomId)
+            .update({'lastMessage': newLastMessage});
+
+        emit(state.copyWith(
+          messages: state.messages.where((msg) => msg.id != messageId).toList(),
+        ));
       } else {
         await messageRef.update({
           'deletedFor': FieldValue.arrayUnion([currentUserId])
         });
+        emit(state.copyWith(
+          messages: state.messages.map((msg) {
+            if (msg.id == messageId) {
+              return msg.copyWith(deletedFor: [...msg.deletedFor, currentUserId]);
+            }
+            return msg;
+          }).toList(),
+        ));
       }
     } catch (e) {
       print("Error deleting message: $e");
+      emit(state.copyWith(error: "Failed to delete message"));
     }
   }
   void setReplyMessage(ChatMessage? message) {

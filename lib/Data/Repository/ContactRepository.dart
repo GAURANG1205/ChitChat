@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:developer';
 import 'package:chitchat/Data/Repository/template/RepoTemplate.dart';
 import 'package:chitchat/localDb/ContactLocal.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:flutter/foundation.dart';
@@ -39,12 +40,15 @@ class ContactRepository extends RepoTemplate {
     try {
       final cachedContacts = await _localDb.getCachedContacts();
       final cachedPhoneNumbers = cachedContacts.map((c) => c['phoneNumber'] as String).toSet();
-      final contacts = await FlutterContacts.getContacts(withProperties: true, withPhoto: true);
-      final phoneNumbers = await compute(_normalizeContacts, contacts);
+      final contacts = await FlutterContacts.getContacts(withProperties: true);
+      final phoneNumbers = _normalizeContacts(contacts);
       if (phoneNumbers.every((contact) => cachedPhoneNumbers.contains(contact['phoneNumber']))) {
         return;
       }
       final usersSnapshot = await firestore.collection("users").get();
+      for (var doc in usersSnapshot.docs) {
+        log('Firestore user data: ${doc.data()}');
+      }
       final registeredUsers = usersSnapshot.docs.map((doc) => UserModel.fromFirestore(doc)).toList();
       final registeredUsersMap = {
         for (var user in registeredUsers) normalizePhoneNumber(user.phoneNumber): user
@@ -57,13 +61,13 @@ class ContactRepository extends RepoTemplate {
         String phoneNumber = contact["phoneNumber"];
         if (registeredUsersMap.containsKey(phoneNumber)) {
           final registeredUser = registeredUsersMap[phoneNumber];
-          if (registeredUser!.uid == currentUserId) continue;
-
+          if (registeredUser!.uid == currentUserId ) {
+            continue;
+          }
           final contactData = {
             'id': registeredUser.uid,
-            'name': contact['name'],
+            'name': registeredUser.username.isNotEmpty?registeredUser.username:contact['name'],
             'phoneNumber': phoneNumber,
-            'photo': contact['photo'],
           };
 
           matchedContacts.add(contactData);
@@ -87,19 +91,22 @@ class ContactRepository extends RepoTemplate {
 
   Future<List<Map<String, dynamic>>> getRegisteredContacts() async {
     final cachedContacts = await _localDb.getCachedContacts();
-
-    if (cachedContacts.isNotEmpty) {
+    final filteredContacts = cachedContacts.where((contact) => contact['id'] != currentUserId).toList();
+    if (filteredContacts.isNotEmpty) {
       refreshContacts();
-      return cachedContacts;
+      return filteredContacts;
     }
+
     try {
       await refreshContacts();
-      return await _localDb.getCachedContacts();
+      final updatedContacts = await _localDb.getCachedContacts();
+      return updatedContacts.where((contact) => contact['id'] != currentUserId).toList();
     } catch (e) {
       log('Error getting registered contacts: $e');
       return [];
     }
   }
+
 
   List<Map<String, dynamic>> _normalizeContacts(List<Contact> contacts) {
     Set<String> uniqueNumbers = {};
@@ -115,13 +122,22 @@ class ContactRepository extends RepoTemplate {
         normalizedContacts.add({
           'name': contact.displayName,
           'phoneNumber': normalizedPhone,
-          'photo': contact.photo,
         });
       }
     }
     return normalizedContacts;
   }
-
+  Future<String?> getUserProfileImage(String userId) async {
+    try {
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
+      if (userDoc.exists) {
+        return userDoc.data()?['profileImage'] as String?;
+      }
+    } catch (e) {
+      print("Error fetching profile image: $e");
+    }
+    return null;
+  }
   void dispose() {
     _contactsStreamController.close();
     _firestoreSubscription?.cancel();

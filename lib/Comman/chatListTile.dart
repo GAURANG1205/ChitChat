@@ -13,13 +13,15 @@ class ChatListTile extends StatelessWidget {
   final String currentUserId;
   final VoidCallback onTap;
   final Map<String, String> contactNameMap;
-
+final String? photoUrl;
   const ChatListTile(
       {super.key,
       required this.chat,
       required this.currentUserId,
       required this.onTap,
-      required this.contactNameMap});
+      required this.contactNameMap,
+        required this.photoUrl
+      });
 
   String _getOtherUsername() {
     final otherUserId = chat.participants.firstWhere(
@@ -27,9 +29,12 @@ class ChatListTile extends StatelessWidget {
       orElse: () => '',
     );
     if (otherUserId.isEmpty) return "Unknown User";
-    return contactNameMap[otherUserId]??chat.participantsName![otherUserId]??
-        "Unknown User";
+    final name = chat.participantsName?[otherUserId] ?? contactNameMap[otherUserId];
+    print("Other User ID: $otherUserId, Retrieved Name: $name");
+
+    return name ?? "Unknown User";
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +43,9 @@ class ChatListTile extends StatelessWidget {
         onTap: onTap,
         contentPadding: EdgeInsets.symmetric(horizontal: 5, vertical: 2),
         leading: CircleAvatar(
-          backgroundImage: AssetImage("assets/icon/Unknown.jpg") as ImageProvider,
+          backgroundImage: (photoUrl != null && photoUrl!.isNotEmpty)
+              ? NetworkImage(photoUrl!)
+              : const AssetImage("assets/icon/Unknown.jpg") as ImageProvider,
         ),
         title: Text(
           _getOtherUsername(),
@@ -46,26 +53,36 @@ class ChatListTile extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
-        subtitle: chat.lastMessage != null && chat.lastMessage!.isNotEmpty
-            ? Row(
-          children: [
-            Expanded(
-              child: Text(
-                chat.lastMessage!,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(color: Colors.grey[600]),
-              ),
-            ),
-          ],
-        )
-            : const SizedBox(),
+        subtitle: StreamBuilder<ChatRoomModel>(
+          stream: getit<ChatRepository>().getChatRoomStream(chat.id),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return Text("Error loading message");
+            }
+            if (!snapshot.hasData) {
+              return Text("", style: TextStyle(color: Colors.grey[600]));
+            }
+
+            final updatedChat = snapshot.data!;
+            final lastMessage = updatedChat.lastMessage ?? "";
+
+            return Text(
+              lastMessage.isNotEmpty ? lastMessage : "",
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: Colors.grey[600]),
+            );
+          },
+        ),
         trailing: StreamBuilder<int>(
           stream:
               getit<ChatRepository>().getUnReadCount(chat.id, currentUserId),
           builder: (context, snapshot) {
             print("Unread messages count: ${snapshot.data}");
             final unreadCount = snapshot.data ?? 0;
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const SizedBox();
+            }
             if (unreadCount == 0) return const SizedBox();
             return Container(
               padding: const EdgeInsets.all(8),

@@ -40,25 +40,27 @@ class _chatScreenState extends State<chatScreen> {
   final _pageController = PageController();
 
   Future<void> _loadContacts() async {
+    setState(() => _isLoadingContacts = true);
     final hasPermission = await ContactRepository().requestContactsPermission();
     if (!hasPermission) {
       Get.snackbar("Permission Required", "Please enable contact permissions.");
+      setState(() => _isLoadingContacts = false);
       return;
     }
     final contacts = await ContactRepository().getRegisteredContacts();
     if (mounted) {
       setState(() {
-        _contactNameMap.clear();
-        _contactNameMap
-            .addEntries(contacts.map((c) => MapEntry(c['id'], c['name'])));
+        _contactNameMap = {for (var c in contacts) c['id']: c['name']};
         _isLoadingContacts = false;
       });
     }
   }
 
+
   @override
   void dispose() {
     searchController.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
@@ -94,7 +96,7 @@ class _chatScreenState extends State<chatScreen> {
             IconButton(
               onPressed: () async {
                 await getit<cubitAuth>().signOut();
-                getit<AppRouter>().pushAndRemoveUntil(loginPage());
+                Get.offAll(() => loginPage());
               },
               icon: Icon(Icons.search),
             )
@@ -138,7 +140,7 @@ class _chatScreenState extends State<chatScreen> {
           final hasPermission =
               await ContactRepository().requestContactsPermission();
           if (hasPermission) {
-            await Get.to(() => const contactScreen(),
+            await Get.to(() => contactScreen(),
                 transition: Transition.rightToLeft);
           } else {
             Get.snackbar("Permission Required",
@@ -237,21 +239,24 @@ class _chatScreenState extends State<chatScreen> {
                               final otherUserId = chat.participants
                                   .firstWhere((id) => id != _currentUserId);
                               final otherUserName =
-                                  _contactNameMap[otherUserId] ??
                                       chat.participantsName![otherUserId] ??
+                                          _contactNameMap[otherUserId] ??
                                       "Unknown";
-
-                              return StatefulBuilder(
-                                  builder: (context, setState) {
+                              return FutureBuilder<String?>(
+                                  future: _chatRepository.getUserProfileImage(otherUserId),
+                                  builder: (context, profileSnapshot) {
+                                    final profileImageUrl = profileSnapshot.data ?? "";
                                 return ChatListTile(
                                     chat: chat,
                                     currentUserId: _currentUserId,
                                     contactNameMap: _contactNameMap,
+                                    photoUrl: profileImageUrl,
                                     onTap: () async {
                                       await Get.to(
                                           () => ChatMessageScreen(
                                                 receiverId: otherUserId,
                                                 receiverName: otherUserName,
+                                                photoUrl: profileImageUrl,
                                               ),
                                           transition: Transition.rightToLeft);
                                       _loadContacts();
