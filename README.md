@@ -1,6 +1,6 @@
 # 💬 ChitChat – AI-Powered Messaging App
 
-ChitChat is a real-time one-to-one messaging app built with Flutter and Firebase. It supports intelligent conversations with a Gemini AI-powered chatbot, and includes modern chat features like edit, delete, and reply. Users can sign in with Google and manage their profiles with cloud image storage.
+ChitChat is a real-time one-to-one messaging app built with Flutter and Firebase. It includes modern features like message editing, deleting, and replying, plus a built-in Gemini AI chatbot for smart conversations. Users can sign in with Google and manage their profiles with cloud-based image storage.
 
 ---
 
@@ -12,15 +12,18 @@ ChitChat is a real-time one-to-one messaging app built with Flutter and Firebase
   <img src="assets/ChatMessageScreenDark.jpeg" width="200" height="400"/>
 </p>
 
+---
 
 ## 🌟 Features
 
 - 💬 One-to-One Real-Time Messaging
 - ✏️ Edit, Delete & Reply to Messages
-- 🤖 Chat with AI Bot (Gemini API Integration)
+- 🤖 Gemini AI Chatbot for Smart Replies
 - 🔐 Google Sign-In Authentication
-- 🖼️ Upload and Store User Profile Images (Cloudinary)
+- 🖼️ Upload & Store Profile Images via Cloudinary
 - 🧾 Modern UI with Clean Form Validations
+- 🧠 AI Chat using Gemini API
+- 📦 State Management using **Flutter BLoC & Cubit**
 - 🔔 Firebase Push Notifications *(optional)*
 
 ---
@@ -29,23 +32,24 @@ ChitChat is a real-time one-to-one messaging app built with Flutter and Firebase
 
 **Frontend:** Flutter, Dart  
 **Backend:** Firebase Auth, Firebase Realtime Database / Firestore  
+**State Management:** Flutter BLoC, Cubit  
 **Storage:** Firebase Storage, Cloudinary  
 **AI:** Gemini AI API  
-**Other Tools:** Firebase CLI, FlutterFire
+**Others:** Firebase CLI, FlutterFire
 
 ---
 
 ## 🧠 AI Integration
 
-- Integrated **Gemini AI** as a chatbot for users to talk with intelligent responses.
-- Detects context and generates human-like replies.
+- Integrated **Gemini AI API** as a chatbot to handle smart, contextual replies.
+- Designed for a smooth user experience alongside human conversations.
 
 ---
 
 ## 🚀 Deployment
 
-- **App:** Didn't Deploy
-- **Backend Hosting:** Firebase CLI
+- **App:** _Not Deployed Yet_  
+- **Backend:** Firebase (via Firebase CLI)
 
 ---
 
@@ -56,7 +60,7 @@ ChitChat is a real-time one-to-one messaging app built with Flutter and Firebase
 git clone https://github.com/GAURANG1205/ChitChat.git
 cd ChitChat
 
-# Install Flutter dependencies
+# Get Flutter packages
 flutter pub get
 
 # Run the app
